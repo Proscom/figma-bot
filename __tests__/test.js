@@ -1,15 +1,15 @@
 const { FigmaBotServer, saveURLToAirtable } = require('../lib');
 
 const server = new FigmaBotServer({
-  postRequestHandlerScripts: {
+  requestProcessingCompletedHandlers: {
     createFile: (req, res, result) =>
       saveURLToAirtable(req, res, {
         baseURL: 'https://www.figma.com/file',
         itemId: result
       })
   },
-  responseWaitForFileCreated: false,
-  responseWaitForProjectCreated: false
+  responseAfterFileCreated: false,
+  responseAfterProjectCreated: false
 });
 (async () => {
   await server.start();
