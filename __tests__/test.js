@@ -1,3 +1,4 @@
+require('dotenv-flow').config();
 const { FigmaBotServer, saveURLToAirtable } = require('../lib');
 
 const server = new FigmaBotServer({
