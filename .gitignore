@@ -1,0 +1,5 @@
+/__tests__/screenshots
+/__tests__/cookies.json
+/.idea
+/lib
+/node_modules

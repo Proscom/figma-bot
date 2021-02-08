@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "declaration": true,
+    "noImplicitAny": false,
+    "target": "es5",
+    "sourceMap": true,
+    "strictNullChecks": true,
+    "esModuleInterop": true,
+    "lib": ["es6", "dom"],
+    "typeRoots": ["node_modules/@types"],
+    "outDir": "./lib"
+  },
+  "include": ["./src"]
+}
