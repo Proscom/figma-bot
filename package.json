@@ -35,6 +35,7 @@
     "express": "^4.17.1",
     "express-pino-logger": "^6.0.0",
     "pino": "^6.11.0",
+    "pino-pretty": "^4.5.0",
     "puppeteer": "^5.5.0"
   }
 }

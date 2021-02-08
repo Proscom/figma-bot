@@ -53,7 +53,7 @@ export class FigmaBotServer {
       throw new Error('Environment variable "FIGMA_USER_PASSWORD" not found.');
     }
     this.PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
-    this.logger = pino();
+    this.logger = pino({ prettyPrint: true });
     this.bot = new FigmaBot({
       authData: {
         email: FIGMA_USER_NAME,
