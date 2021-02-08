@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { RequestProcessingCompletedHandler } from './FigmaBotServer';
+import { RequestProcessedHandler } from './FigmaBotServer';
 
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
 
@@ -7,7 +7,7 @@ export interface ISaveURLToAirtableData {
   itemId: string;
   baseURL: string;
 }
-export const saveURLToAirtable: RequestProcessingCompletedHandler<ISaveURLToAirtableData> = async (
+export const saveURLToAirtable: RequestProcessedHandler<ISaveURLToAirtableData> = async (
   req,
   res,
   data
