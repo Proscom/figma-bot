@@ -31,7 +31,8 @@ export interface IFigmaBotServerParams {
 }
 
 export class FigmaBotServer {
-  PORT: number;
+  bindPort: number;
+  bindHost: string;
   bot: FigmaBot;
   app: Application;
   appServer: Server;
@@ -52,7 +53,8 @@ export class FigmaBotServer {
     if (!FIGMA_USER_PASSWORD) {
       throw new Error('Environment variable "FIGMA_USER_PASSWORD" not found.');
     }
-    this.PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
+    this.bindPort = process.env.PORT ? parseInt(process.env.PORT) : 3000;
+    this.bindHost = process.env.HOST || 'localhost';
     this.logger = pino({ prettyPrint: true });
     this.bot = new FigmaBot({
       authData: {
@@ -104,8 +106,8 @@ export class FigmaBotServer {
       }
     );
 
-    this.appServer = this.app.listen(this.PORT, () => {
-      this.logger.info(`Figma bot server is running on port ${this.PORT}.`);
+    this.appServer = this.app.listen(this.bindPort, this.bindHost, () => {
+      this.logger.info(`Figma bot server is running on port ${this.bindPort}.`);
     });
   }
 
