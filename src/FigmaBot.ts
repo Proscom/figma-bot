@@ -25,7 +25,6 @@ export interface IElementSearchOptions {
 
 export class FigmaBot {
   browser: Browser;
-  page: Page;
   authData: IAuthData;
   delayDuration: number;
   screenshotsDirPath: string;
@@ -52,26 +51,25 @@ export class FigmaBot {
       await fs.mkdir(this.screenshotsDirPath);
     }
     this.browser = await puppeteer.launch();
-    this.page = await this.browser.newPage();
   }
 
   async stop(): Promise<void> {
     await this.browser.close();
   }
 
-  async screenshot(): Promise<void> {
-    await this.page.screenshot({
+  async screenshot(page: Page): Promise<void> {
+    await page.screenshot({
       path: `${this.screenshotsDirPath}/${Date.now()}.png`
     });
   }
 
-  async findElement({
-    selector,
-    innerHTML
-  }: IElementSearchOptions): Promise<ElementHandle> {
+  async findElement(
+    page: Page,
+    { selector, innerHTML }: IElementSearchOptions
+  ): Promise<ElementHandle> {
     if (selector) {
       try {
-        await this.page.waitForSelector(selector);
+        await page.waitForSelector(selector);
       } catch {
         throw new Error(
           `Element that matches selector "${selector}" not found.`
@@ -82,9 +80,9 @@ export class FigmaBot {
     let targetElementHandle: ElementHandle | null = null;
 
     if (innerHTML) {
-      const handles = await this.page.$$(selector || '*');
+      const handles = await page.$$(selector || '*');
       for (let i = 0; i < handles.length; i++) {
-        const currentElementInnerHTML = await this.page.evaluate(
+        const currentElementInnerHTML = await page.evaluate(
           (element: HTMLElement) => element.innerHTML,
           handles[i]
         );
@@ -97,7 +95,7 @@ export class FigmaBot {
         }
       }
     } else {
-      targetElementHandle = await this.page.$(selector || '*');
+      targetElementHandle = await page.$(selector || '*');
     }
 
     if (targetElementHandle) {
@@ -111,48 +109,51 @@ export class FigmaBot {
     );
   }
 
-  async click(elementHandleOrSelector: ElementHandle | string): Promise<void> {
+  async click(
+    page: Page,
+    elementHandleOrSelector: ElementHandle | string
+  ): Promise<void> {
     let targetHandle: ElementHandle;
     if (typeof elementHandleOrSelector === 'string') {
-      targetHandle = await this.findElement({
+      targetHandle = await this.findElement(page, {
         selector: elementHandleOrSelector
       });
     } else {
       targetHandle = elementHandleOrSelector;
     }
 
-    const clientRect = await this.page.evaluate((target: HTMLElement) => {
+    const clientRect = await page.evaluate((target: HTMLElement) => {
       const { x, y, width, height } = target.getBoundingClientRect();
       return { x, y, width, height };
     }, targetHandle);
-    await this.page.mouse.click(
+    await page.mouse.click(
       clientRect.x + random(0, clientRect.width),
       clientRect.y + random(0, clientRect.height)
     );
   }
 
-  async submitSingInForm(authData = this.authData) {
+  async submitSingInForm(page: Page, authData = this.authData) {
     await this.delayRandom();
-    await this.click('form#auth-view-page > input[name="email"]');
+    await this.click(page, 'form#auth-view-page > input[name="email"]');
     await this.delayRandom();
-    await this.page.keyboard.type(authData.email, { delay: 200 });
+    await page.keyboard.type(authData.email, { delay: 200 });
     await this.delayRandom();
-    await this.click('form#auth-view-page > input[name="password"]');
+    await this.click(page, 'form#auth-view-page > input[name="password"]');
     await this.delayRandom();
-    await this.page.keyboard.type(authData.password, { delay: 200 });
+    await page.keyboard.type(authData.password, { delay: 200 });
     await this.delayRandom();
-    await this.click('form#auth-view-page > button[type="submit"]');
+    await this.click(page, 'form#auth-view-page > button[type="submit"]');
   }
 
-  async parseAuthPageError(): Promise<null | string> {
-    const emailInputHandle = await this.findElement({
+  async parseAuthPageError(page: Page): Promise<null | string> {
+    const emailInputHandle = await this.findElement(page, {
       selector: 'form#auth-view-page > input[name="email"]'
     });
-    const passwordInputHandle = await this.findElement({
+    const passwordInputHandle = await this.findElement(page, {
       selector: 'form#auth-view-page > input[name="password"]'
     });
 
-    return await this.page.evaluate(
+    return await page.evaluate(
       (emailInput: HTMLElement, passwordInput: HTMLElement) => {
         if (emailInput.classList.toString().includes('invalidInput')) {
           return 'Invalid email';
@@ -167,31 +168,31 @@ export class FigmaBot {
     );
   }
 
-  async signIn(authData = this.authData): Promise<void> {
+  async signIn(page: Page, authData = this.authData): Promise<void> {
     await Promise.all([
-      this.page.goto('https://www.figma.com/login'),
-      this.page.waitForNavigation()
+      page.goto('https://www.figma.com/login'),
+      page.waitForNavigation()
     ]);
 
-    if (this.page.url() === 'https://www.figma.com/files/recent') {
+    if (page.url() === 'https://www.figma.com/files/recent') {
       return;
     }
 
     try {
       await Promise.all([
-        this.submitSingInForm(authData),
-        this.page.waitForNavigation()
+        this.submitSingInForm(page, authData),
+        page.waitForNavigation()
       ]);
     } catch (e) {
       throw new Error(`Authorization failed with error: ${e.message}`);
     }
 
-    const url = this.page.url();
+    const url = page.url();
     if (url === 'https://www.figma.com/files/recent') {
-      const cookies = await this.page.cookies();
+      const cookies = await page.cookies();
       await fs.writeFile(this.cookiesPath, JSON.stringify(cookies));
     } else if (url === 'https://www.figma.com/login') {
-      const error = await this.parseAuthPageError();
+      const error = await this.parseAuthPageError(page);
       throw new Error(
         error
           ? `Authorization failed with error: ${error}`
@@ -204,74 +205,68 @@ export class FigmaBot {
     }
   }
 
-  async checkAuth(): Promise<boolean> {
-    if (this.page.url() === 'https://www.figma.com/files/recent') {
+  async checkAuth(page: Page): Promise<boolean> {
+    if (page.url() === 'https://www.figma.com/files/recent') {
       return true;
     }
     await Promise.all([
-      this.page.goto('https://www.figma.com/files/recent'),
-      this.page.waitForNavigation()
+      page.goto('https://www.figma.com/files/recent'),
+      page.waitForNavigation()
     ]);
-    return this.page.url() === 'https://www.figma.com/files/recent';
+    return page.url() === 'https://www.figma.com/files/recent';
   }
 
-  async confirmAuth(authData: IAuthData = this.authData): Promise<void> {
-    if (!(await this.checkAuth())) {
+  async confirmAuth(
+    page: Page,
+    authData: IAuthData = this.authData
+  ): Promise<void> {
+    if (!(await this.checkAuth(page))) {
       if (pathExists(this.cookiesPath)) {
         const cookiesBuffer = await fs.readFile(this.cookiesPath);
         try {
           const cookies = JSON.parse(cookiesBuffer.toString());
-          await this.page.setCookie(...cookies);
-          if (!(await this.checkAuth())) {
-            await this.signIn(authData);
+          await page.setCookie(...cookies);
+          if (!(await this.checkAuth(page))) {
+            await this.signIn(page, authData);
           }
         } catch {
-          await this.signIn(authData);
+          await this.signIn(page, authData);
         }
       } else {
-        await this.signIn(authData);
+        await this.signIn(page, authData);
       }
     }
   }
 
-  async gotToTeamPage(teamId: string): Promise<void> {
+  async gotToTeamPage(page: Page, teamId: string): Promise<void> {
     const teamPageURL = `https://www.figma.com/files/team/${teamId}`;
-    if (this.page.url().includes(teamPageURL)) {
+    if (page.url().includes(teamPageURL)) {
       return;
     }
-    await Promise.all([
-      this.page.goto(teamPageURL),
-      this.page.waitForNavigation()
-    ]);
-    if (!this.page.url().includes(teamPageURL)) {
+    await Promise.all([page.goto(teamPageURL), page.waitForNavigation()]);
+    if (!page.url().includes(teamPageURL)) {
       throw new Error(`Team with id ${teamId} page loading failed.`);
     }
   }
 
-  async gotToProjectPage(projectId: string): Promise<void> {
+  async gotToProjectPage(page: Page, projectId: string): Promise<void> {
     const projectPageURL = `https://www.figma.com/files/project/${projectId}`;
-    if (this.page.url().includes(projectPageURL)) {
+    if (page.url().includes(projectPageURL)) {
       return;
     }
-    await Promise.all([
-      this.page.goto(projectPageURL),
-      this.page.waitForNavigation()
-    ]);
-    if (!this.page.url().includes(projectPageURL)) {
+    await Promise.all([page.goto(projectPageURL), page.waitForNavigation()]);
+    if (!page.url().includes(projectPageURL)) {
       throw new Error(`Project with id "${projectId}" page loading failed.`);
     }
   }
 
-  async gotToFilePage(fileId: string): Promise<void> {
+  async gotToFilePage(page: Page, fileId: string): Promise<void> {
     const filePageURL = `https://www.figma.com/file/${fileId}`;
-    if (this.page.url().includes(filePageURL)) {
+    if (page.url().includes(filePageURL)) {
       return;
     }
-    await Promise.all([
-      this.page.goto(filePageURL),
-      this.page.waitForNavigation()
-    ]);
-    if (!this.page.url().includes(filePageURL)) {
+    await Promise.all([page.goto(filePageURL), page.waitForNavigation()]);
+    if (!page.url().includes(filePageURL)) {
       throw new Error(`File with id "${fileId}" page loading failed.`);
     }
   }
@@ -284,40 +279,43 @@ export class FigmaBot {
       );
     }
 
+    const page: Page = await this.browser.newPage();
     try {
-      await this.confirmAuth();
-      await this.gotToTeamPage(teamId);
+      await this.confirmAuth(page);
+      await this.gotToTeamPage(page, teamId);
 
-      const newProjectButtonHandle = await this.findElement({
+      const newProjectButtonHandle = await this.findElement(page, {
         selector: '[class*="tool_bar--toolBarButton"]',
         innerHTML: 'New project'
       });
       await this.delayRandom();
-      await this.click(newProjectButtonHandle);
+      await this.click(page, newProjectButtonHandle);
 
-      await this.page.waitForSelector('[class*="new_folder_modal"]');
-
-      await this.delayRandom();
-      await this.click('[class*="new_folder_modal"] > input');
+      await page.waitForSelector('[class*="new_folder_modal"]');
 
       await this.delayRandom();
-      await this.page.keyboard.type(projectName, { delay: 200 });
+      await this.click(page, '[class*="new_folder_modal"] > input');
 
-      const createProjectButtonHandle = await this.findElement({
+      await this.delayRandom();
+      await page.keyboard.type(projectName, { delay: 200 });
+
+      const createProjectButtonHandle = await this.findElement(page, {
         selector: '[class*="basic_form--btn"]',
         innerHTML: 'Create project'
       });
       await this.delayRandom();
-      await this.click(createProjectButtonHandle);
+      await this.click(page, createProjectButtonHandle);
     } catch (e) {
+      await page.close();
       throw new ProjectCreationError(e.message, teamId, projectName);
     }
 
-    await this.page.waitForNavigation();
+    await page.waitForNavigation();
 
     const newProjectPageURLRegExp = /^https:\/\/www.figma.com\/files\/project\/[\d]{8}[\/$].*/;
-    const url = this.page.url();
+    const url = page.url();
     if (!newProjectPageURLRegExp.test(url)) {
+      await page.close();
       throw new ProjectCreationError(
         `Unexpectedly redirected to "${url}".\nNote that project still could be created.`,
         teamId,
@@ -326,6 +324,7 @@ export class FigmaBot {
     }
 
     const projectId = url.split('/')[5];
+    await page.close();
     return projectId;
   }
 
@@ -337,29 +336,31 @@ export class FigmaBot {
       );
     }
 
+    const page: Page = await this.browser.newPage();
     try {
-      await this.confirmAuth();
-      await this.gotToProjectPage(projectId);
+      await this.confirmAuth(page);
+      await this.gotToProjectPage(page, projectId);
 
       await this.delayRandom();
-      await this.click('[class*="tool_bar"] > [aria-label="New file"]');
+      await this.click(page, '[class*="tool_bar"] > [aria-label="New file"]');
 
-      await this.page.waitForSelector('[class*="file_template_modal"]');
+      await page.waitForSelector('[class*="file_template_modal"]');
 
-      const blankTemplateDivHandle = await this.findElement({
+      const blankTemplateDivHandle = await this.findElement(page, {
         selector: '[class*="template_tiles"]',
         innerHTML: 'Blank canvas'
       });
       await this.delayRandom();
-      await this.click(blankTemplateDivHandle);
+      await this.click(page, blankTemplateDivHandle);
 
-      const createFileButtonHandle = await this.findElement({
+      const createFileButtonHandle = await this.findElement(page, {
         selector: '[class*="basic_form--btn"]',
         innerHTML: 'Create file'
       });
       await this.delayRandom();
-      await this.click(createFileButtonHandle);
+      await this.click(page, createFileButtonHandle);
     } catch (e) {
+      await page.close();
       throw new FileCreationError(e.message, projectId, fileName);
     }
 
@@ -368,12 +369,13 @@ export class FigmaBot {
     // Redirects several times before final file page loaded
     try {
       for (let i = 0; i < 10; i++) {
-        if (newFilePageURLRegExp.test(this.page.url())) {
+        if (newFilePageURLRegExp.test(page.url())) {
           break;
         }
-        await this.page.waitForNavigation();
+        await page.waitForNavigation();
       }
     } catch (e) {
+      await page.close();
       throw new FileCreationError(
         `${e.message}\nNote that file still could be created, but named "Untitled".`,
         projectId,
@@ -381,8 +383,9 @@ export class FigmaBot {
       );
     }
 
-    const url = this.page.url();
+    const url = page.url();
     if (!newFilePageURLRegExp.test(url)) {
+      await page.close();
       throw new FileCreationError(
         `Unexpectedly redirected to "${url}".\nNote that file still could be created, but named "Untitled".`,
         projectId,
@@ -394,24 +397,30 @@ export class FigmaBot {
       await this.renameFile(fileId, fileName);
     } catch (e) {
       throw e;
+    } finally {
+      await page.close();
     }
     return fileId;
   }
 
   async renameFile(fileId: string, newName: string) {
+    const page: Page = await this.browser.newPage();
     try {
-      await this.gotToFilePage(fileId);
+      await this.confirmAuth(page);
+      await this.gotToFilePage(page, fileId);
       await this.delayRandom();
-      await this.click('[class*="filename_view--title"]');
+      await this.click(page, '[class*="filename_view--title"]');
       await this.delayRandom();
-      await this.page.keyboard.type(newName, { delay: 200 });
+      await page.keyboard.type(newName, { delay: 200 });
       await this.delayRandom();
-      await this.page.keyboard.press('Enter', { delay: 70 });
+      await page.keyboard.press('Enter', { delay: 70 });
       await this.delayRandom();
     } catch (e) {
       throw new Error(
         `File with id "${fileId}" rename to "${newName}" failed with error: ${e.message}`
       );
+    } finally {
+      await page.close();
     }
   }
 }
