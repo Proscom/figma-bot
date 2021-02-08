@@ -38,9 +38,17 @@ const server = new FigmaBotServer({
           .send('Query parameter "teamId" must be a non-empty string.');
         return;
       }
+
+      const creationStartedMessage = `Project "${projectName}" in team with id "${teamId}" and file "${fileName}" creation started.`;
+      res.status(200).send(creationStartedMessage);
+      req.log.info(creationStartedMessage);
+
       try {
         const projectId = await server.bot.createProject(projectName, teamId);
         const fileId = await server.bot.createFile(fileName, projectId);
+        req.log.info(
+          `Project "${projectName}" in team with id "${teamId}" and file "${fileName}" created.`
+        );
         await saveURLToAirtable(req, res, {
           baseURL: 'https://www.figma.com/file',
           itemId: fileId
