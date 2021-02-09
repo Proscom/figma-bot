@@ -19,8 +19,8 @@ export type RequestProcessedHandler<T = any> = (
 ) => Promise<void>;
 
 export interface IRequestProcessedHandlers {
-  createProject?: RequestProcessedHandler;
-  createFile?: RequestProcessedHandler;
+  createProject?: RequestProcessedHandler<string>;
+  createFile?: RequestProcessedHandler<string>;
 }
 
 export interface IFigmaBotServerOptions {
@@ -40,7 +40,7 @@ export class FigmaBotServer {
   constructor({
     requestProcessedHandlers,
     figmaBotOptions
-  }: IFigmaBotServerOptions) {
+  }: IFigmaBotServerOptions = {}) {
     if (!FIGMA_USER_NAME) {
       throw new Error('Environment variable "FIGMA_USER_NAME" not found.');
     }
