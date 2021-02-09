@@ -24,8 +24,6 @@ export interface IRequestProcessedHandlers {
 }
 
 export interface IFigmaBotServerOptions {
-  responseBeforeProjectCreated?: boolean;
-  responseBeforeFileCreated?: boolean;
   requestProcessedHandlers?: IRequestProcessedHandlers;
   figmaBotOptions?: Omit<IFigmaBotOptions, 'authData'>;
 }
@@ -37,14 +35,10 @@ export class FigmaBotServer {
   app: Application;
   appServer: Server;
   logger: Logger;
-  responseBeforeProjectCreated: boolean;
-  responseBeforeFileCreated: boolean;
   requestProcessedHandlers: IRequestProcessedHandlers;
 
   constructor({
-    responseBeforeProjectCreated = false,
-    responseBeforeFileCreated = false,
-    requestProcessedHandlers = {},
+    requestProcessedHandlers,
     figmaBotOptions
   }: IFigmaBotServerOptions) {
     if (!FIGMA_USER_NAME) {
@@ -63,9 +57,7 @@ export class FigmaBotServer {
       },
       ...figmaBotOptions
     });
-    this.responseBeforeProjectCreated = responseBeforeProjectCreated;
-    this.responseBeforeFileCreated = responseBeforeFileCreated;
-    this.requestProcessedHandlers = requestProcessedHandlers;
+    this.requestProcessedHandlers = requestProcessedHandlers || {};
   }
 
   async start(): Promise<void> {
@@ -152,7 +144,7 @@ export class FigmaBotServer {
     }
 
     const creationStartedMessage = `Project "${projectName}" in team with id "${teamId}" creation started.`;
-    if (this.responseBeforeProjectCreated) {
+    if (req.query.responseBeforeProjectCreated) {
       res.status(200).send(creationStartedMessage);
     }
     req.log.info(creationStartedMessage);
@@ -161,13 +153,13 @@ export class FigmaBotServer {
       const projectId = await this.bot.createProject(projectName, teamId);
       const createdMessage = `Project "${projectName}" in team with id "${teamId}" created with id "${projectId}".`;
       req.log.info(createdMessage);
-      if (!this.responseBeforeProjectCreated) {
+      if (!req.query.responseBeforeProjectCreated) {
         res.status(200).send(createdMessage);
       }
       return projectId;
     } catch (e) {
       req.log.error(e.message);
-      if (!this.responseBeforeProjectCreated) {
+      if (!req.query.responseBeforeProjectCreated) {
         res.status(501).send(e.message);
       }
     }
@@ -193,7 +185,7 @@ export class FigmaBotServer {
     }
 
     const creationStartedMessage = `File "${fileName}" in project with id "${projectId}" creation started.`;
-    if (this.responseBeforeFileCreated) {
+    if (req.query.responseBeforeFileCreated) {
       res.status(200).send(creationStartedMessage);
     }
     req.log.info(creationStartedMessage);
@@ -202,13 +194,13 @@ export class FigmaBotServer {
       const fileId = await this.bot.createFile(fileName, projectId);
       const createdMessage = `File "${fileName}" in project with id "${projectId}" created with id "${fileId}".`;
       req.log.info(createdMessage);
-      if (!this.responseBeforeFileCreated) {
+      if (!req.query.responseBeforeFileCreated) {
         res.status(200).send(createdMessage);
       }
       return fileId;
     } catch (e) {
       req.log.error(e.message);
-      if (!this.responseBeforeFileCreated) {
+      if (!req.query.responseBeforeFileCreated) {
         res.status(501).send(e.message);
       }
     }

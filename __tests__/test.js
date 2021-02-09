@@ -8,9 +8,7 @@ const server = new FigmaBotServer({
         baseURL: 'https://www.figma.com/file',
         itemId: result
       })
-  },
-  responseBeforeFileCreated: true,
-  responseBeforeProjectCreated: true
+  }
 });
 (async () => {
   await server.start();
