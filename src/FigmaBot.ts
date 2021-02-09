@@ -14,7 +14,6 @@ export interface IAuthData {
 export interface IFigmaBotOptions {
   authData: IAuthData;
   delayDuration?: number;
-  screenshotsDirPath?: string;
   cookiesPath?: string;
 }
 
@@ -27,18 +26,15 @@ export class FigmaBot {
   browser: Browser;
   authData: IAuthData;
   delayDuration: number;
-  screenshotsDirPath: string;
   cookiesPath: string;
 
   constructor({
     authData,
     delayDuration = 2000,
-    screenshotsDirPath = './screenshots',
     cookiesPath = './cookies.json'
   }: IFigmaBotOptions) {
     this.authData = authData;
     this.delayDuration = delayDuration;
-    this.screenshotsDirPath = screenshotsDirPath;
     this.cookiesPath = cookiesPath;
   }
 
@@ -47,20 +43,11 @@ export class FigmaBot {
   }
 
   async start(): Promise<void> {
-    if (!pathExists(this.screenshotsDirPath)) {
-      await fs.mkdir(this.screenshotsDirPath);
-    }
     this.browser = await puppeteer.launch();
   }
 
   async stop(): Promise<void> {
     await this.browser.close();
-  }
-
-  async screenshot(page: Page): Promise<void> {
-    await page.screenshot({
-      path: `${this.screenshotsDirPath}/${Date.now()}.png`
-    });
   }
 
   async findElement(
