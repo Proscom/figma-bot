@@ -1,6 +1,12 @@
 {
   "name": "figma-bot",
   "version": "0.0.1",
+  "description": "Bot to work with projects and files in Figma",
+  "license": "MIT",
+  "repository": "Proscom/figma-bot",
+  "author": "Kirill Sviryukov @sviryukov",
+  "homepage": "https://github.com/Proscom/figma-bot",
+  "bugs": "https://github.com/Proscom/figma-bot/issues",
   "main": "lib/index.js",
   "module": "lib/es/index.js",
   "typings": "lib/index.d.ts",
