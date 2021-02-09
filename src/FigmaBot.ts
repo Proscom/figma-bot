@@ -11,7 +11,7 @@ export interface IAuthData {
   password: string;
 }
 
-export interface IFigmaBotParams {
+export interface IFigmaBotOptions {
   authData: IAuthData;
   delayDuration?: number;
   screenshotsDirPath?: string;
@@ -35,7 +35,7 @@ export class FigmaBot {
     delayDuration = 2000,
     screenshotsDirPath = './screenshots',
     cookiesPath = './cookies.json'
-  }: IFigmaBotParams) {
+  }: IFigmaBotOptions) {
     this.authData = authData;
     this.delayDuration = delayDuration;
     this.screenshotsDirPath = screenshotsDirPath;

@@ -3,7 +3,7 @@ import { Server } from 'http';
 import pino, { Logger } from 'pino';
 import expressPinoLogger from 'express-pino-logger';
 import basicAuth from 'basic-auth';
-import { FigmaBot, IFigmaBotParams } from './FigmaBot';
+import { FigmaBot, IFigmaBotOptions } from './FigmaBot';
 
 const FIGMA_USER_NAME = process.env.FIGMA_USER_NAME;
 const FIGMA_USER_PASSWORD = process.env.FIGMA_USER_PASSWORD;
@@ -23,11 +23,11 @@ export interface IRequestProcessedHandlers {
   createFile?: RequestProcessedHandler;
 }
 
-export interface IFigmaBotServerParams {
+export interface IFigmaBotServerOptions {
   responseBeforeProjectCreated?: boolean;
   responseBeforeFileCreated?: boolean;
   requestProcessedHandlers?: IRequestProcessedHandlers;
-  figmaBotParams?: Omit<IFigmaBotParams, 'authData'>;
+  figmaBotOptions?: Omit<IFigmaBotOptions, 'authData'>;
 }
 
 export class FigmaBotServer {
@@ -45,8 +45,8 @@ export class FigmaBotServer {
     responseBeforeProjectCreated = false,
     responseBeforeFileCreated = false,
     requestProcessedHandlers = {},
-    figmaBotParams
-  }: IFigmaBotServerParams) {
+    figmaBotOptions
+  }: IFigmaBotServerOptions) {
     if (!FIGMA_USER_NAME) {
       throw new Error('Environment variable "FIGMA_USER_NAME" not found.');
     }
@@ -61,7 +61,7 @@ export class FigmaBotServer {
         email: FIGMA_USER_NAME,
         password: FIGMA_USER_PASSWORD
       },
-      ...figmaBotParams
+      ...figmaBotOptions
     });
     this.responseBeforeProjectCreated = responseBeforeProjectCreated;
     this.responseBeforeFileCreated = responseBeforeFileCreated;
