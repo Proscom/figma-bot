@@ -8,7 +8,6 @@ import {
   FileRenameError
 } from './errors';
 import {
-  random,
   wait,
   findElement,
   click,
@@ -16,7 +15,9 @@ import {
   waitForRedirects,
   goToTeamPage,
   goToProjectPage,
-  goToFilePage
+  goToFilePage,
+  submitSingInForm,
+  parseLoginPageError
 } from './utils';
 
 export interface IAuthData {
@@ -51,52 +52,12 @@ export class FigmaBot {
     this.cookiesProvider = cookiesProvider;
   }
 
-  async delayRandom() {
-    await wait(random(this.delayDuration, this.delayDuration + 1000));
-  }
-
   async start(): Promise<void> {
     this.browser = await puppeteer.launch();
   }
 
   async stop(): Promise<void> {
     await this.browser.close();
-  }
-
-  async submitSingInForm(page: Page, authData = this.authData) {
-    await this.delayRandom();
-    await page.click('form#auth-view-page > input[name="email"]');
-    await this.delayRandom();
-    await page.keyboard.type(authData.email, { delay: 200 });
-    await this.delayRandom();
-    await page.click('form#auth-view-page > input[name="password"]');
-    await this.delayRandom();
-    await page.keyboard.type(authData.password, { delay: 200 });
-    await this.delayRandom();
-    await page.click('form#auth-view-page > button[type="submit"]');
-  }
-
-  async parseAuthPageError(page: Page): Promise<null | string> {
-    const emailInputHandle = await findElement(page, {
-      selector: 'form#auth-view-page > input[name="email"]'
-    });
-    const passwordInputHandle = await findElement(page, {
-      selector: 'form#auth-view-page > input[name="password"]'
-    });
-
-    return await page.evaluate(
-      (emailInput: HTMLElement, passwordInput: HTMLElement) => {
-        if (emailInput.classList.toString().includes('invalidInput')) {
-          return 'Invalid email';
-        }
-        if (passwordInput.classList.toString().includes('invalidInput')) {
-          return 'Invalid password';
-        }
-        return null;
-      },
-      emailInputHandle,
-      passwordInputHandle
-    );
   }
 
   async signIn(page: Page, authData = this.authData): Promise<void> {
@@ -107,7 +68,7 @@ export class FigmaBot {
     }
 
     try {
-      await waitAndNavigate(page, this.submitSingInForm(page, authData));
+      await waitAndNavigate(page, submitSingInForm(page, authData));
     } catch (e) {
       throw new AuthorizationError(e);
     }
@@ -119,7 +80,7 @@ export class FigmaBot {
         await this.cookiesProvider.setCookies(cookies);
       }
     } else if (url === 'https://www.figma.com/login') {
-      const error = await this.parseAuthPageError(page);
+      const error = await parseLoginPageError(page);
       throw new AuthorizationError(error || 'unknown error');
     } else {
       throw new AuthorizationError(`Unexpectedly redirected to "${url}"`);
@@ -175,22 +136,22 @@ export class FigmaBot {
         selector: '[class*="tool_bar--toolBarButton"]',
         innerHTML: 'New project'
       });
-      await this.delayRandom();
+      await wait(this.delayDuration);
       await click(page, newProjectButtonHandle);
 
       await page.waitForSelector('[class*="new_folder_modal"]');
 
-      await this.delayRandom();
+      await wait(this.delayDuration);
       await page.click('[class*="new_folder_modal"] > input');
 
-      await this.delayRandom();
+      await wait(this.delayDuration);
       await page.keyboard.type(projectName, { delay: 200 });
 
       const createProjectButtonHandle = await findElement(page, {
         selector: '[class*="basic_form--btn"]',
         innerHTML: 'Create project'
       });
-      await this.delayRandom();
+      await wait(this.delayDuration);
       await waitAndNavigate(page, click(page, createProjectButtonHandle));
     } catch (e) {
       await page.close();
@@ -226,7 +187,7 @@ export class FigmaBot {
       await this.confirmAuth(page);
       await goToProjectPage(page, projectId);
 
-      await this.delayRandom();
+      await wait(this.delayDuration);
       await page.click('[class*="new_file_dropdown"]');
 
       await page.waitForSelector('[class*="file_template_modal"]');
@@ -235,14 +196,14 @@ export class FigmaBot {
         selector: '[class*="template_tiles"]',
         innerHTML: 'Blank canvas'
       });
-      await this.delayRandom();
+      await wait(this.delayDuration);
       await click(page, blankTemplateDivHandle);
 
       const createFileButtonHandle = await findElement(page, {
         selector: '[class*="basic_form--btn"]',
         innerHTML: 'Create file'
       });
-      await this.delayRandom();
+      await wait(this.delayDuration);
       await click(page, createFileButtonHandle);
     } catch (e) {
       await page.close();
@@ -277,13 +238,13 @@ export class FigmaBot {
     try {
       await this.confirmAuth(page);
       await goToFilePage(page, fileId);
-      await this.delayRandom();
+      await wait(this.delayDuration);
       await page.click('[class*="filename_view--title"]');
-      await this.delayRandom();
+      await wait(this.delayDuration);
       await page.keyboard.type(newName, { delay: 200 });
-      await this.delayRandom();
+      await wait(this.delayDuration);
       await page.keyboard.press('Enter', { delay: 70 });
-      await this.delayRandom();
+      await wait(this.delayDuration);
     } catch (e) {
       throw new FileRenameError(e, fileId, newName);
     } finally {

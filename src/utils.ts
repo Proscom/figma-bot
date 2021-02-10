@@ -117,3 +117,44 @@ export const goToFilePage = async (page: Page, fileId: string) => {
     throw new Error(`File with id ${fileId} page loading failed.`);
   }
 };
+
+export const submitSingInForm = async (
+  page: Page,
+  authData,
+  delayDuration = 2000
+) => {
+  await wait(delayDuration);
+  await page.click('form#auth-view-page > input[name="email"]');
+  await wait(delayDuration);
+  await page.keyboard.type(authData.email, { delay: 200 });
+  await wait(delayDuration);
+  await page.click('form#auth-view-page > input[name="password"]');
+  await wait(delayDuration);
+  await page.keyboard.type(authData.password, { delay: 200 });
+  await wait(delayDuration);
+  await page.click('form#auth-view-page > button[type="submit"]');
+};
+export const parseLoginPageError = async (
+  page: Page
+): Promise<null | string> => {
+  const emailInputHandle = await findElement(page, {
+    selector: 'form#auth-view-page > input[name="email"]'
+  });
+  const passwordInputHandle = await findElement(page, {
+    selector: 'form#auth-view-page > input[name="password"]'
+  });
+
+  return await page.evaluate(
+    (emailInput: HTMLElement, passwordInput: HTMLElement) => {
+      if (emailInput.classList.toString().includes('invalidInput')) {
+        return 'Invalid email';
+      }
+      if (passwordInput.classList.toString().includes('invalidInput')) {
+        return 'Invalid password';
+      }
+      return null;
+    },
+    emailInputHandle,
+    passwordInputHandle
+  );
+};
