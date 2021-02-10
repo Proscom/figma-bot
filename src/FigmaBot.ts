@@ -3,7 +3,7 @@ import { Browser } from 'puppeteer/lib/esm/puppeteer/common/Browser';
 import { Page } from 'puppeteer/lib/esm/puppeteer/common/Page';
 import { promises as fs, existsSync as pathExists } from 'fs';
 import { ProjectCreationError, FileCreationError } from './errors';
-import { random, wait, findElement, click } from './utils';
+import { random, wait, findElement, click, waitAndNavigate } from './utils';
 
 export interface IAuthData {
   email: string;
@@ -81,20 +81,14 @@ export class FigmaBot {
   }
 
   async signIn(page: Page, authData = this.authData): Promise<void> {
-    await Promise.all([
-      page.goto('https://www.figma.com/login'),
-      page.waitForNavigation()
-    ]);
+    await waitAndNavigate(page, page.goto('https://www.figma.com/login'));
 
     if (page.url() === 'https://www.figma.com/files/recent') {
       return;
     }
 
     try {
-      await Promise.all([
-        this.submitSingInForm(page, authData),
-        page.waitForNavigation()
-      ]);
+      await waitAndNavigate(page, this.submitSingInForm(page, authData));
     } catch (e) {
       throw new Error(`Authorization failed with error: ${e.message}`);
     }
@@ -121,10 +115,10 @@ export class FigmaBot {
     if (page.url() === 'https://www.figma.com/files/recent') {
       return true;
     }
-    await Promise.all([
-      page.goto('https://www.figma.com/files/recent'),
-      page.waitForNavigation()
-    ]);
+    await waitAndNavigate(
+      page,
+      page.goto('https://www.figma.com/files/recent')
+    );
     return page.url() === 'https://www.figma.com/files/recent';
   }
 
@@ -155,7 +149,7 @@ export class FigmaBot {
     if (page.url().includes(teamPageURL)) {
       return;
     }
-    await Promise.all([page.goto(teamPageURL), page.waitForNavigation()]);
+    await waitAndNavigate(page, page.goto(teamPageURL));
     if (!page.url().includes(teamPageURL)) {
       throw new Error(`Team with id ${teamId} page loading failed.`);
     }
@@ -166,7 +160,7 @@ export class FigmaBot {
     if (page.url().includes(projectPageURL)) {
       return;
     }
-    await Promise.all([page.goto(projectPageURL), page.waitForNavigation()]);
+    await waitAndNavigate(page, page.goto(projectPageURL));
     if (!page.url().includes(projectPageURL)) {
       throw new Error(`Project with id "${projectId}" page loading failed.`);
     }
@@ -177,7 +171,7 @@ export class FigmaBot {
     if (page.url().includes(filePageURL)) {
       return;
     }
-    await Promise.all([page.goto(filePageURL), page.waitForNavigation()]);
+    await waitAndNavigate(page, page.goto(filePageURL));
     if (!page.url().includes(filePageURL)) {
       throw new Error(`File with id "${fileId}" page loading failed.`);
     }

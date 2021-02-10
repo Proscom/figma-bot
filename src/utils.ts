@@ -7,6 +7,9 @@ export const random = (min: number, max: number) =>
 export const wait = (timeout: number) =>
   new Promise<void>((resolve) => setTimeout(resolve, timeout));
 
+export const waitAndNavigate = async (page: Page, promise: Promise<any>) =>
+  await Promise.all([page.waitForNavigation(), promise]);
+
 export interface IElementSearchOptions {
   selector?: string;
   innerHTML?: string | RegExp;
