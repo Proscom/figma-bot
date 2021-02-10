@@ -1,10 +1,9 @@
 import puppeteer from 'puppeteer';
 import { Browser } from 'puppeteer/lib/esm/puppeteer/common/Browser';
 import { Page } from 'puppeteer/lib/esm/puppeteer/common/Page';
-import { ElementHandle } from 'puppeteer/lib/esm/puppeteer/common/JSHandle';
 import { promises as fs, existsSync as pathExists } from 'fs';
 import { ProjectCreationError, FileCreationError } from './errors';
-import { random, wait } from './utils';
+import { random, wait, findElement, click } from './utils';
 
 export interface IAuthData {
   email: string;
@@ -15,11 +14,6 @@ export interface IFigmaBotOptions {
   authData: IAuthData;
   delayDuration?: number;
   cookiesPath?: string;
-}
-
-export interface IElementSearchOptions {
-  selector?: string;
-  innerHTML?: string | RegExp;
 }
 
 export class FigmaBot {
@@ -50,93 +44,24 @@ export class FigmaBot {
     await this.browser.close();
   }
 
-  async findElement(
-    page: Page,
-    { selector, innerHTML }: IElementSearchOptions
-  ): Promise<ElementHandle> {
-    if (selector) {
-      try {
-        await page.waitForSelector(selector);
-      } catch {
-        throw new Error(
-          `Element that matches selector "${selector}" not found.`
-        );
-      }
-    }
-
-    let targetElementHandle: ElementHandle | null = null;
-
-    if (innerHTML) {
-      const handles = await page.$$(selector || '*');
-      for (let i = 0; i < handles.length; i++) {
-        const currentElementInnerHTML = await page.evaluate(
-          (element: HTMLElement) => element.innerHTML,
-          handles[i]
-        );
-        if (typeof innerHTML === 'string') {
-          if (currentElementInnerHTML === innerHTML) {
-            targetElementHandle = handles[i];
-          }
-        } else if ((innerHTML as RegExp).test(currentElementInnerHTML)) {
-          targetElementHandle = handles[i];
-        }
-      }
-    } else {
-      targetElementHandle = await page.$(selector || '*');
-    }
-
-    if (targetElementHandle) {
-      return targetElementHandle;
-    }
-
-    throw new Error(
-      `Element${
-        selector && `that matches selector "${selector}"`
-      } with innerHTML "${innerHTML}" not found.`
-    );
-  }
-
-  async click(
-    page: Page,
-    elementHandleOrSelector: ElementHandle | string
-  ): Promise<void> {
-    let targetHandle: ElementHandle;
-    if (typeof elementHandleOrSelector === 'string') {
-      targetHandle = await this.findElement(page, {
-        selector: elementHandleOrSelector
-      });
-    } else {
-      targetHandle = elementHandleOrSelector;
-    }
-
-    const clientRect = await page.evaluate((target: HTMLElement) => {
-      const { x, y, width, height } = target.getBoundingClientRect();
-      return { x, y, width, height };
-    }, targetHandle);
-    await page.mouse.click(
-      clientRect.x + random(0, clientRect.width),
-      clientRect.y + random(0, clientRect.height)
-    );
-  }
-
   async submitSingInForm(page: Page, authData = this.authData) {
     await this.delayRandom();
-    await this.click(page, 'form#auth-view-page > input[name="email"]');
+    await click(page, 'form#auth-view-page > input[name="email"]');
     await this.delayRandom();
     await page.keyboard.type(authData.email, { delay: 200 });
     await this.delayRandom();
-    await this.click(page, 'form#auth-view-page > input[name="password"]');
+    await click(page, 'form#auth-view-page > input[name="password"]');
     await this.delayRandom();
     await page.keyboard.type(authData.password, { delay: 200 });
     await this.delayRandom();
-    await this.click(page, 'form#auth-view-page > button[type="submit"]');
+    await click(page, 'form#auth-view-page > button[type="submit"]');
   }
 
   async parseAuthPageError(page: Page): Promise<null | string> {
-    const emailInputHandle = await this.findElement(page, {
+    const emailInputHandle = await findElement(page, {
       selector: 'form#auth-view-page > input[name="email"]'
     });
-    const passwordInputHandle = await this.findElement(page, {
+    const passwordInputHandle = await findElement(page, {
       selector: 'form#auth-view-page > input[name="password"]'
     });
 
@@ -271,27 +196,27 @@ export class FigmaBot {
       await this.confirmAuth(page);
       await this.gotToTeamPage(page, teamId);
 
-      const newProjectButtonHandle = await this.findElement(page, {
+      const newProjectButtonHandle = await findElement(page, {
         selector: '[class*="tool_bar--toolBarButton"]',
         innerHTML: 'New project'
       });
       await this.delayRandom();
-      await this.click(page, newProjectButtonHandle);
+      await click(page, newProjectButtonHandle);
 
       await page.waitForSelector('[class*="new_folder_modal"]');
 
       await this.delayRandom();
-      await this.click(page, '[class*="new_folder_modal"] > input');
+      await click(page, '[class*="new_folder_modal"] > input');
 
       await this.delayRandom();
       await page.keyboard.type(projectName, { delay: 200 });
 
-      const createProjectButtonHandle = await this.findElement(page, {
+      const createProjectButtonHandle = await findElement(page, {
         selector: '[class*="basic_form--btn"]',
         innerHTML: 'Create project'
       });
       await this.delayRandom();
-      await this.click(page, createProjectButtonHandle);
+      await click(page, createProjectButtonHandle);
     } catch (e) {
       await page.close();
       throw new ProjectCreationError(e.message, teamId, projectName);
@@ -333,19 +258,19 @@ export class FigmaBot {
 
       await page.waitForSelector('[class*="file_template_modal"]');
 
-      const blankTemplateDivHandle = await this.findElement(page, {
+      const blankTemplateDivHandle = await findElement(page, {
         selector: '[class*="template_tiles"]',
         innerHTML: 'Blank canvas'
       });
       await this.delayRandom();
-      await this.click(page, blankTemplateDivHandle);
+      await click(page, blankTemplateDivHandle);
 
-      const createFileButtonHandle = await this.findElement(page, {
+      const createFileButtonHandle = await findElement(page, {
         selector: '[class*="basic_form--btn"]',
         innerHTML: 'Create file'
       });
       await this.delayRandom();
-      await this.click(page, createFileButtonHandle);
+      await click(page, createFileButtonHandle);
     } catch (e) {
       await page.close();
       throw new FileCreationError(e.message, projectId, fileName);
@@ -396,7 +321,7 @@ export class FigmaBot {
       await this.confirmAuth(page);
       await this.gotToFilePage(page, fileId);
       await this.delayRandom();
-      await this.click(page, '[class*="filename_view--title"]');
+      await click(page, '[class*="filename_view--title"]');
       await this.delayRandom();
       await page.keyboard.type(newName, { delay: 200 });
       await this.delayRandom();
