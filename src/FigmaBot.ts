@@ -8,7 +8,14 @@ import {
   AuthorizationError,
   FileRenameError
 } from './errors';
-import { random, wait, findElement, click, waitAndNavigate } from './utils';
+import {
+  random,
+  wait,
+  findElement,
+  click,
+  waitAndNavigate,
+  waitForRedirects
+} from './utils';
 
 export interface IAuthData {
   email: string;
@@ -148,7 +155,8 @@ export class FigmaBot {
     if (page.url().includes(teamPageURL)) {
       return;
     }
-    await waitAndNavigate(page, page.goto(teamPageURL));
+    await page.goto(teamPageURL);
+    await waitForRedirects(page);
     if (!page.url().includes(teamPageURL)) {
       throw new Error(`Team with id ${teamId} page loading failed.`);
     }
@@ -159,7 +167,8 @@ export class FigmaBot {
     if (page.url().includes(projectPageURL)) {
       return;
     }
-    await waitAndNavigate(page, page.goto(projectPageURL));
+    await page.goto(projectPageURL);
+    await waitForRedirects(page);
     if (!page.url().includes(projectPageURL)) {
       throw new Error(`Project with id "${projectId}" page loading failed.`);
     }
@@ -170,7 +179,8 @@ export class FigmaBot {
     if (page.url().includes(filePageURL)) {
       return;
     }
-    await waitAndNavigate(page, page.goto(filePageURL));
+    await page.goto(filePageURL);
+    await waitForRedirects(page);
     if (!page.url().includes(filePageURL)) {
       throw new Error(`File with id "${fileId}" page loading failed.`);
     }
@@ -269,19 +279,7 @@ export class FigmaBot {
 
     const newFilePageURLRegExp = /^https:\/\/www.figma.com\/file\/[\d\w]{22}[\/$].*/;
 
-    // Redirects several times before final file page loaded
-    try {
-      for (let i = 0; i < 10; i++) {
-        if (newFilePageURLRegExp.test(page.url())) {
-          break;
-        }
-        await page.waitForNavigation();
-      }
-    } catch (e) {
-      await page.close();
-      throw new FileCreationError(e, projectId, fileName);
-    }
-
+    await waitForRedirects(page);
     const url = page.url();
     if (!newFilePageURLRegExp.test(url)) {
       await page.close();

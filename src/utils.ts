@@ -10,6 +10,20 @@ export const wait = (timeout: number) =>
 export const waitAndNavigate = async (page: Page, promise: Promise<any>) =>
   await Promise.all([page.waitForNavigation(), promise]);
 
+export const waitForRedirects = async (
+  page: Page,
+  redirectsLimit: number = 5,
+  timeout = 10000
+) => {
+  try {
+    for (let i = 0; i < redirectsLimit; i++) {
+      await page.waitForNavigation({ timeout });
+    }
+  } catch {
+    return;
+  }
+};
+
 export interface IElementSearchOptions {
   selector?: string;
   innerHTML?: string | RegExp;
