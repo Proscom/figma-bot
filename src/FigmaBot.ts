@@ -329,7 +329,7 @@ export class FigmaBot {
       await this.gotToProjectPage(page, projectId);
 
       await this.delayRandom();
-      await this.click(page, '[class*="tool_bar"] > [aria-label="New file"]');
+      await click(page, '[class*="new_file_dropdown"]');
 
       await page.waitForSelector('[class*="file_template_modal"]');
 
