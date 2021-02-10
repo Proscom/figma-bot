@@ -14,7 +14,10 @@ import {
   findElement,
   click,
   waitAndNavigate,
-  waitForRedirects
+  waitForRedirects,
+  goToTeamPage,
+  goToProjectPage,
+  goToFilePage
 } from './utils';
 
 export interface IAuthData {
@@ -150,42 +153,6 @@ export class FigmaBot {
     }
   }
 
-  async gotToTeamPage(page: Page, teamId: string): Promise<void> {
-    const teamPageURL = `https://www.figma.com/files/team/${teamId}`;
-    if (page.url().includes(teamPageURL)) {
-      return;
-    }
-    await page.goto(teamPageURL);
-    await waitForRedirects(page);
-    if (!page.url().includes(teamPageURL)) {
-      throw new Error(`Team with id ${teamId} page loading failed.`);
-    }
-  }
-
-  async gotToProjectPage(page: Page, projectId: string): Promise<void> {
-    const projectPageURL = `https://www.figma.com/files/project/${projectId}`;
-    if (page.url().includes(projectPageURL)) {
-      return;
-    }
-    await page.goto(projectPageURL);
-    await waitForRedirects(page);
-    if (!page.url().includes(projectPageURL)) {
-      throw new Error(`Project with id "${projectId}" page loading failed.`);
-    }
-  }
-
-  async gotToFilePage(page: Page, fileId: string): Promise<void> {
-    const filePageURL = `https://www.figma.com/file/${fileId}`;
-    if (page.url().includes(filePageURL)) {
-      return;
-    }
-    await page.goto(filePageURL);
-    await waitForRedirects(page);
-    if (!page.url().includes(filePageURL)) {
-      throw new Error(`File with id "${fileId}" page loading failed.`);
-    }
-  }
-
   async createProject(projectName: string, teamId: string): Promise<string> {
     if (!projectName) {
       throw new ProjectCreationError(
@@ -197,7 +164,7 @@ export class FigmaBot {
     const page: Page = await this.browser.newPage();
     try {
       await this.confirmAuth(page);
-      await this.gotToTeamPage(page, teamId);
+      await goToTeamPage(page, teamId);
 
       const newProjectButtonHandle = await findElement(page, {
         selector: '[class*="tool_bar--toolBarButton"]',
@@ -252,7 +219,7 @@ export class FigmaBot {
     const page: Page = await this.browser.newPage();
     try {
       await this.confirmAuth(page);
-      await this.gotToProjectPage(page, projectId);
+      await goToProjectPage(page, projectId);
 
       await this.delayRandom();
       await page.click('[class*="new_file_dropdown"]');
@@ -304,7 +271,7 @@ export class FigmaBot {
     const page: Page = await this.browser.newPage();
     try {
       await this.confirmAuth(page);
-      await this.gotToFilePage(page, fileId);
+      await goToFilePage(page, fileId);
       await this.delayRandom();
       await page.click('[class*="filename_view--title"]');
       await this.delayRandom();

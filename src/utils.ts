@@ -12,8 +12,8 @@ export const waitAndNavigate = async (page: Page, promise: Promise<any>) =>
 
 export const waitForRedirects = async (
   page: Page,
-  redirectsLimit: number = 5,
-  timeout = 10000
+  redirectsLimit: number = 10,
+  timeout = 5000
 ) => {
   try {
     for (let i = 0; i < redirectsLimit; i++) {
@@ -84,4 +84,36 @@ export const click = async (
     clientRect.x + random(0, clientRect.width),
     clientRect.y + random(0, clientRect.height)
   );
+};
+
+export const goTo = async (page: Page, targetURL: string) => {
+  if (page.url().includes(targetURL)) {
+    return;
+  }
+  await page.goto(targetURL);
+  await waitForRedirects(page);
+  if (!page.url().includes(targetURL)) {
+    throw new Error(`Page loading failed.`);
+  }
+};
+export const goToTeamPage = async (page: Page, teamId: string) => {
+  try {
+    await goTo(page, `https://www.figma.com/files/team/${teamId}`);
+  } catch {
+    throw new Error(`Team with id ${teamId} page loading failed.`);
+  }
+};
+export const goToProjectPage = async (page: Page, projectId: string) => {
+  try {
+    await goTo(page, `https://www.figma.com/files/project/${projectId}`);
+  } catch {
+    throw new Error(`Project with id ${projectId} page loading failed.`);
+  }
+};
+export const goToFilePage = async (page: Page, fileId: string) => {
+  try {
+    await goTo(page, `https://www.figma.com/file/${fileId}`);
+  } catch {
+    throw new Error(`File with id ${fileId} page loading failed.`);
+  }
 };
