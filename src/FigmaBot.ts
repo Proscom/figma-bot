@@ -2,7 +2,12 @@ import puppeteer from 'puppeteer';
 import { Browser } from 'puppeteer/lib/esm/puppeteer/common/Browser';
 import { Page } from 'puppeteer/lib/esm/puppeteer/common/Page';
 import { promises as fs, existsSync as pathExists } from 'fs';
-import { ProjectCreationError, FileCreationError } from './errors';
+import {
+  ProjectCreationError,
+  FileCreationError,
+  AuthorizationError,
+  FileRenameError
+} from './errors';
 import { random, wait, findElement, click, waitAndNavigate } from './utils';
 
 export interface IAuthData {
@@ -90,7 +95,7 @@ export class FigmaBot {
     try {
       await waitAndNavigate(page, this.submitSingInForm(page, authData));
     } catch (e) {
-      throw new Error(`Authorization failed with error: ${e.message}`);
+      throw new AuthorizationError(e);
     }
 
     const url = page.url();
@@ -99,15 +104,9 @@ export class FigmaBot {
       await fs.writeFile(this.cookiesPath, JSON.stringify(cookies));
     } else if (url === 'https://www.figma.com/login') {
       const error = await this.parseAuthPageError(page);
-      throw new Error(
-        error
-          ? `Authorization failed with error: ${error}`
-          : 'Authorization failed due to unknown reason.'
-      );
+      throw new AuthorizationError(error || 'unknown error.');
     } else {
-      throw new Error(
-        `Authorization failed with error: Unexpectedly redirected to "${url}".`
-      );
+      throw new AuthorizationError(`Unexpectedly redirected to "${url}".`);
     }
   }
 
@@ -213,7 +212,7 @@ export class FigmaBot {
       await click(page, createProjectButtonHandle);
     } catch (e) {
       await page.close();
-      throw new ProjectCreationError(e.message, teamId, projectName);
+      throw new ProjectCreationError(e, teamId, projectName);
     }
 
     await page.waitForNavigation();
@@ -267,7 +266,7 @@ export class FigmaBot {
       await click(page, createFileButtonHandle);
     } catch (e) {
       await page.close();
-      throw new FileCreationError(e.message, projectId, fileName);
+      throw new FileCreationError(e, projectId, fileName);
     }
 
     const newFilePageURLRegExp = /^https:\/\/www.figma.com\/file\/[\d\w]{22}[\/$].*/;
@@ -282,11 +281,7 @@ export class FigmaBot {
       }
     } catch (e) {
       await page.close();
-      throw new FileCreationError(
-        `${e.message}\nNote that file still could be created, but named "Untitled".`,
-        projectId,
-        fileName
-      );
+      throw new FileCreationError(e, projectId, fileName);
     }
 
     const url = page.url();
@@ -322,9 +317,7 @@ export class FigmaBot {
       await page.keyboard.press('Enter', { delay: 70 });
       await this.delayRandom();
     } catch (e) {
-      throw new Error(
-        `File with id "${fileId}" rename to "${newName}" failed with error: ${e.message}`
-      );
+      throw new FileRenameError(e, fileId, newName);
     } finally {
       await page.close();
     }
