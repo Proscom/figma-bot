@@ -104,9 +104,9 @@ export class FigmaBot {
       await fs.writeFile(this.cookiesPath, JSON.stringify(cookies));
     } else if (url === 'https://www.figma.com/login') {
       const error = await this.parseAuthPageError(page);
-      throw new AuthorizationError(error || 'unknown error.');
+      throw new AuthorizationError(error || 'unknown error');
     } else {
-      throw new AuthorizationError(`Unexpectedly redirected to "${url}".`);
+      throw new AuthorizationError(`Unexpectedly redirected to "${url}"`);
     }
   }
 
@@ -179,7 +179,7 @@ export class FigmaBot {
   async createProject(projectName: string, teamId: string): Promise<string> {
     if (!projectName) {
       throw new ProjectCreationError(
-        'Parameter "projectName" must be a non-empty string.',
+        'Parameter "projectName" must be a non-empty string',
         teamId
       );
     }
@@ -220,7 +220,7 @@ export class FigmaBot {
     if (!newProjectPageURLRegExp.test(url)) {
       await page.close();
       throw new ProjectCreationError(
-        `Unexpectedly redirected to "${url}".\nNote that project still could be created.`,
+        `Unexpectedly redirected to "${url}". Note that project still could be created.`,
         teamId,
         projectName
       );
@@ -234,7 +234,7 @@ export class FigmaBot {
   async createFile(fileName: string, projectId: string): Promise<string> {
     if (!fileName) {
       throw new FileCreationError(
-        'Parameter "fileName" must be a non-empty string.',
+        'Parameter "fileName" must be a non-empty string',
         projectId
       );
     }
@@ -286,7 +286,7 @@ export class FigmaBot {
     if (!newFilePageURLRegExp.test(url)) {
       await page.close();
       throw new FileCreationError(
-        `Unexpectedly redirected to "${url}".\nNote that file still could be created, but named "Untitled".`,
+        `Unexpectedly redirected to "${url}". Note that file still could be created, but named "Untitled"`,
         projectId,
         fileName
       );

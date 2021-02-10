@@ -3,7 +3,7 @@ export class AuthorizationError extends Error {
   name = 'AuthorizationError';
   constructor(error: Error | string) {
     super(
-      `Authorization failed with error: ${
+      `Authorization failed | ${
         typeof error === 'string' ? error : error.message
       }`
     );
@@ -21,7 +21,7 @@ export class ProjectCreationError extends Error {
     super(
       `Project ${
         projectName && `"${projectName}"`
-      } creation in team with id "${teamId}" failed with error: ${
+      } creation in team with id "${teamId}" failed | ${
         typeof error === 'string' ? error : error.message
       }`
     );
@@ -39,7 +39,7 @@ export class FileCreationError extends Error {
     super(
       `File ${
         fileName && `"${fileName}"`
-      } creation in project with id "${projectId}" failed with error: ${
+      } creation in project with id "${projectId}" failed | ${
         typeof error === 'string' ? error : error.message
       }`
     );
@@ -55,7 +55,7 @@ export class FileRenameError extends Error {
     public newName?: string
   ) {
     super(
-      `File with id "${fileId}" rename to "${newName}" failed with error: ${
+      `File with id "${fileId}" rename to "${newName}" failed | ${
         typeof error === 'string' ? error : error.message
       }`
     );

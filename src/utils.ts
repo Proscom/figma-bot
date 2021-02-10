@@ -53,7 +53,7 @@ export const findElement = async (
 
   throw new Error(
     `Element${
-      selector && `that matches selector "${selector}"`
+      selector && ` that matches selector "${selector}"`
     } with innerHTML "${innerHTML}" not found.`
   );
 };
