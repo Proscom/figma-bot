@@ -209,13 +209,11 @@ export class FigmaBot {
         innerHTML: 'Create project'
       });
       await this.delayRandom();
-      await click(page, createProjectButtonHandle);
+      await waitAndNavigate(page, click(page, createProjectButtonHandle));
     } catch (e) {
       await page.close();
       throw new ProjectCreationError(e, teamId, projectName);
     }
-
-    await page.waitForNavigation();
 
     const newProjectPageURLRegExp = /^https:\/\/www.figma.com\/files\/project\/[\d]{8}[\/$].*/;
     const url = page.url();
