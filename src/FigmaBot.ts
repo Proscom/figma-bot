@@ -51,15 +51,15 @@ export class FigmaBot {
 
   async submitSingInForm(page: Page, authData = this.authData) {
     await this.delayRandom();
-    await click(page, 'form#auth-view-page > input[name="email"]');
+    await page.click('form#auth-view-page > input[name="email"]');
     await this.delayRandom();
     await page.keyboard.type(authData.email, { delay: 200 });
     await this.delayRandom();
-    await click(page, 'form#auth-view-page > input[name="password"]');
+    await page.click('form#auth-view-page > input[name="password"]');
     await this.delayRandom();
     await page.keyboard.type(authData.password, { delay: 200 });
     await this.delayRandom();
-    await click(page, 'form#auth-view-page > button[type="submit"]');
+    await page.click('form#auth-view-page > button[type="submit"]');
   }
 
   async parseAuthPageError(page: Page): Promise<null | string> {
@@ -199,7 +199,7 @@ export class FigmaBot {
       await page.waitForSelector('[class*="new_folder_modal"]');
 
       await this.delayRandom();
-      await click(page, '[class*="new_folder_modal"] > input');
+      await page.click('[class*="new_folder_modal"] > input');
 
       await this.delayRandom();
       await page.keyboard.type(projectName, { delay: 200 });
@@ -245,7 +245,7 @@ export class FigmaBot {
       await this.gotToProjectPage(page, projectId);
 
       await this.delayRandom();
-      await click(page, '[class*="new_file_dropdown"]');
+      await page.click('[class*="new_file_dropdown"]');
 
       await page.waitForSelector('[class*="file_template_modal"]');
 
@@ -308,7 +308,7 @@ export class FigmaBot {
       await this.confirmAuth(page);
       await this.gotToFilePage(page, fileId);
       await this.delayRandom();
-      await click(page, '[class*="filename_view--title"]');
+      await page.click('[class*="filename_view--title"]');
       await this.delayRandom();
       await page.keyboard.type(newName, { delay: 200 });
       await this.delayRandom();

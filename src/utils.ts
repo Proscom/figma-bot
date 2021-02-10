@@ -60,21 +60,12 @@ export const findElement = async (
 
 export const click = async (
   page: Page,
-  elementHandleOrSelector: ElementHandle | string
+  elementHandle: ElementHandle
 ): Promise<void> => {
-  let targetHandle: ElementHandle;
-  if (typeof elementHandleOrSelector === 'string') {
-    targetHandle = await findElement(page, {
-      selector: elementHandleOrSelector
-    });
-  } else {
-    targetHandle = elementHandleOrSelector;
-  }
-
   const clientRect = await page.evaluate((target: HTMLElement) => {
     const { x, y, width, height } = target.getBoundingClientRect();
     return { x, y, width, height };
-  }, targetHandle);
+  }, elementHandle);
   await page.mouse.click(
     clientRect.x + random(0, clientRect.width),
     clientRect.y + random(0, clientRect.height)
