@@ -1,5 +1,9 @@
 export class ProjectCreationError extends Error {
-  constructor(errorMessage, teamId, projectName?) {
+  constructor(
+    public errorMessage: string,
+    public teamId: string,
+    public projectName?: string
+  ) {
     super(
       `Project ${
         projectName && `"${projectName}"`
@@ -8,7 +12,11 @@ export class ProjectCreationError extends Error {
   }
 }
 export class FileCreationError extends Error {
-  constructor(errorMessage, projectId, fileName?) {
+  constructor(
+    public errorMessage: string,
+    public projectId: string,
+    public fileName?: string
+  ) {
     super(
       `File ${
         fileName && `"${fileName}"`
