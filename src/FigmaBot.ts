@@ -1,7 +1,6 @@
 import puppeteer from 'puppeteer';
 import { Browser } from 'puppeteer/lib/esm/puppeteer/common/Browser';
 import { Page } from 'puppeteer/lib/esm/puppeteer/common/Page';
-import { promises as fs, existsSync as pathExists } from 'fs';
 import {
   ProjectCreationError,
   FileCreationError,
@@ -25,26 +24,31 @@ export interface IAuthData {
   password: string;
 }
 
+export interface CookiesProvider {
+  getCookies: () => Promise<any>;
+  setCookies: (cookies: any) => Promise<void>;
+}
+
 export interface IFigmaBotOptions {
   authData: IAuthData;
   delayDuration?: number;
-  cookiesPath?: string;
+  cookiesProvider?: CookiesProvider;
 }
 
 export class FigmaBot {
   browser: Browser;
   authData: IAuthData;
   delayDuration: number;
-  cookiesPath: string;
+  cookiesProvider: CookiesProvider | undefined;
 
   constructor({
     authData,
     delayDuration = 2000,
-    cookiesPath = './cookies.json'
+    cookiesProvider
   }: IFigmaBotOptions) {
     this.authData = authData;
     this.delayDuration = delayDuration;
-    this.cookiesPath = cookiesPath;
+    this.cookiesProvider = cookiesProvider;
   }
 
   async delayRandom() {
@@ -110,8 +114,10 @@ export class FigmaBot {
 
     const url = page.url();
     if (url === 'https://www.figma.com/files/recent') {
-      const cookies = await page.cookies();
-      await fs.writeFile(this.cookiesPath, JSON.stringify(cookies));
+      if (this.cookiesProvider) {
+        const cookies = await page.cookies();
+        await this.cookiesProvider.setCookies(cookies);
+      }
     } else if (url === 'https://www.figma.com/login') {
       const error = await this.parseAuthPageError(page);
       throw new AuthorizationError(error || 'unknown error');
@@ -136,18 +142,17 @@ export class FigmaBot {
     authData: IAuthData = this.authData
   ): Promise<void> {
     if (!(await this.checkAuth(page))) {
-      if (pathExists(this.cookiesPath)) {
-        const cookiesBuffer = await fs.readFile(this.cookiesPath);
-        try {
-          const cookies = JSON.parse(cookiesBuffer.toString());
-          await page.setCookie(...cookies);
-          if (!(await this.checkAuth(page))) {
-            await this.signIn(page, authData);
-          }
-        } catch {
+      if (!this.cookiesProvider) {
+        await this.signIn(page, authData);
+        return;
+      }
+      try {
+        const cookies = await this.cookiesProvider.getCookies();
+        await page.setCookie(...cookies);
+        if (!(await this.checkAuth(page))) {
           await this.signIn(page, authData);
         }
-      } else {
+      } catch {
         await this.signIn(page, authData);
       }
     }
