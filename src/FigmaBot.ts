@@ -53,15 +53,7 @@ export class FigmaBot {
     this.cookiesProvider = cookiesProvider;
   }
 
-  async start(): Promise<void> {
-    this.browser = await puppeteer.launch();
-  }
-
-  async stop(): Promise<void> {
-    await this.browser.close();
-  }
-
-  async signIn(page: Page, authData = this.authData): Promise<void> {
+  async _signIn(page: Page, authData = this.authData): Promise<void> {
     await waitAndNavigate(page, page.goto('https://www.figma.com/login'));
 
     if (page.url() === 'https://www.figma.com/files/recent') {
@@ -88,25 +80,33 @@ export class FigmaBot {
     }
   }
 
-  async confirmAuth(
+  async _confirmAuth(
     page: Page,
     authData: IAuthData = this.authData
   ): Promise<void> {
     if (!(await checkAuth(page))) {
       if (!this.cookiesProvider) {
-        await this.signIn(page, authData);
+        await this._signIn(page, authData);
         return;
       }
       try {
         const cookies = await this.cookiesProvider.getCookies();
         await page.setCookie(...cookies);
         if (!(await checkAuth(page))) {
-          await this.signIn(page, authData);
+          await this._signIn(page, authData);
         }
       } catch {
-        await this.signIn(page, authData);
+        await this._signIn(page, authData);
       }
     }
+  }
+
+  async start(): Promise<void> {
+    this.browser = await puppeteer.launch();
+  }
+
+  async stop(): Promise<void> {
+    await this.browser.close();
   }
 
   async createProject(projectName: string, teamId: string): Promise<string> {
@@ -119,7 +119,7 @@ export class FigmaBot {
 
     const page: Page = await this.browser.newPage();
     try {
-      await this.confirmAuth(page);
+      await this._confirmAuth(page);
       await goToTeamPage(page, teamId);
 
       const newProjectButtonHandle = await findElement(page, {
@@ -174,7 +174,7 @@ export class FigmaBot {
 
     const page: Page = await this.browser.newPage();
     try {
-      await this.confirmAuth(page);
+      await this._confirmAuth(page);
       await goToProjectPage(page, projectId);
 
       await wait(this.delayDuration);
@@ -226,7 +226,7 @@ export class FigmaBot {
   async renameFile(fileId: string, newName: string) {
     const page: Page = await this.browser.newPage();
     try {
-      await this.confirmAuth(page);
+      await this._confirmAuth(page);
       await goToFilePage(page, fileId);
       await wait(this.delayDuration);
       await page.click('[class*="filename_view--title"]');
