@@ -50,6 +50,7 @@ Parameters:
 | bot.creatProject(projectName, teamId) | - `projectName` **string** (required)<br/>- `teamId` **string** (required)  | Creates a project with name `projectName` in team with id `teamId`. | `Promise<string>` - a promise which resolves with the new project id |
 | bot.creatFile(fileName, projectId)    | - `fileName` **string** (required),<br/>- `projectId` **string** (required) | Creates a file with name `fileName` in project with id `projectId`. | `Promise<string>` - a promise which resolves with the new file id    |
 | bot.renameFile(fileId, newName)       | - `fileId` **string** (required)<br/>- `newName` **string** (required)      | Renames a file with id `fileId` to `newName`.                       | `Promise<void>`                                                      |
+| bot.renameProject(projectId, newName) | - `projectId` **string** (required)<br/>- `newName` **string** (required)   | Renames a project with id `project` to `newName`.                   | `Promise<void>`                                                      |
 
 You can find your team id in the team's page URL between 'team' and your team name, e.g. for team page URL
 https://www.figma.com/files/team/000000000000000001/MyTeamName team id is 000000000000000001.
