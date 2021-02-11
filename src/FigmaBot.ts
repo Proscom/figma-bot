@@ -250,9 +250,8 @@ export class FigmaBot {
       await this._confirmAuth(page);
       await goToProjectPage(page, projectId);
       await wait(this.delayDuration);
-      const projectName = decodeURIComponent(
-        page.url().split('/').slice(-1)[0]
-      );
+      const pageTitle = await page.title();
+      const projectName = pageTitle.split(' – Figma')[0];
       const projectNameHandle = await findElement(page, {
         selector: '[class*="tool_bar--toolBarTabContent"]',
         innerHTML: projectName
