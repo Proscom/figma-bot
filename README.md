@@ -1,6 +1,6 @@
 # Figma-bot
 
-Figma-bot is a Node.js module to programmatically create and update projects and files in [Figma](https://figma.com).
+Figma-bot is a Node.js module to programmatically create and update projects and files in [Figma](https://figma.com) what does not allow Figma API.
 
 ## Installation
 
