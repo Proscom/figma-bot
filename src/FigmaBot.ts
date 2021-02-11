@@ -5,7 +5,8 @@ import {
   ProjectCreationError,
   FileCreationError,
   AuthorizationError,
-  FileRenameError
+  FileRenameError,
+  ProjectRenameError
 } from './errors';
 import {
   wait,
@@ -18,7 +19,8 @@ import {
   goToFilePage,
   submitSingInForm,
   parseLoginPageError,
-  checkAuth
+  checkAuth,
+  getNextSiblingHandle
 } from './utils';
 
 export interface IAuthData {
@@ -237,6 +239,43 @@ export class FigmaBot {
       await wait(this.delayDuration);
     } catch (e) {
       throw new FileRenameError(e, fileId, newName);
+    } finally {
+      await page.close();
+    }
+  }
+
+  async renameProject(projectId: string, newName: string) {
+    const page: Page = await this.browser.newPage();
+    try {
+      await this._confirmAuth(page);
+      await goToProjectPage(page, projectId);
+      await wait(this.delayDuration);
+      const projectName = decodeURIComponent(
+        page.url().split('/').slice(-1)[0]
+      );
+      const projectNameHandle = await findElement(page, {
+        selector: '[class*="tool_bar--toolBarTabContent"]',
+        innerHTML: projectName
+      });
+      const projectEditMenuOpenButtonHandle = await getNextSiblingHandle(
+        page,
+        projectNameHandle
+      );
+      await wait(this.delayDuration);
+      await click(page, projectEditMenuOpenButtonHandle);
+      const renameButtonHandle = await findElement(page, {
+        selector: '[class*="dropdown--_optionBase"]',
+        innerHTML: 'Rename'
+      });
+      await wait(this.delayDuration);
+      await click(page, renameButtonHandle);
+      await wait(this.delayDuration);
+      await page.keyboard.type(newName, { delay: 200 });
+      await wait(this.delayDuration);
+      await page.keyboard.press('Enter', { delay: 70 });
+      await wait(this.delayDuration);
+    } catch (e) {
+      throw new ProjectRenameError(e, projectId, newName);
     } finally {
       await page.close();
     }

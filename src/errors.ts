@@ -62,3 +62,19 @@ export class FileRenameError extends Error {
     this.error = typeof error === 'string' ? new Error(error) : error;
   }
 }
+export class ProjectRenameError extends Error {
+  error: Error;
+  name = 'ProjectRenameError';
+  constructor(
+    error: Error | string,
+    public projectId: string,
+    public newName?: string
+  ) {
+    super(
+      `Project with id "${projectId}" rename to "${newName}" failed | ${
+        typeof error === 'string' ? error : error.message
+      }`
+    );
+    this.error = typeof error === 'string' ? new Error(error) : error;
+  }
+}
