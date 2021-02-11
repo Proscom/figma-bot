@@ -86,6 +86,22 @@ export const click = async (
   );
 };
 
+export const getNextSiblingHandle = async (
+  page: Page,
+  elementHandle: ElementHandle
+): Promise<ElementHandle> => {
+  const nextSiblingHandleHandle = (
+    await page.evaluateHandle(
+      (projectName: HTMLElement) => projectName.nextElementSibling,
+      elementHandle
+    )
+  ).asElement();
+  if (!nextSiblingHandleHandle) {
+    throw new Error('Next sibling not found');
+  }
+  return nextSiblingHandleHandle;
+};
+
 export const goTo = async (page: Page, targetURL: string) => {
   if (page.url().includes(targetURL)) {
     return;
