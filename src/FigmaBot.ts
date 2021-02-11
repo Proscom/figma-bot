@@ -17,7 +17,8 @@ import {
   goToProjectPage,
   goToFilePage,
   submitSingInForm,
-  parseLoginPageError
+  parseLoginPageError,
+  checkAuth
 } from './utils';
 
 export interface IAuthData {
@@ -87,22 +88,11 @@ export class FigmaBot {
     }
   }
 
-  async checkAuth(page: Page): Promise<boolean> {
-    if (page.url() === 'https://www.figma.com/files/recent') {
-      return true;
-    }
-    await waitAndNavigate(
-      page,
-      page.goto('https://www.figma.com/files/recent')
-    );
-    return page.url() === 'https://www.figma.com/files/recent';
-  }
-
   async confirmAuth(
     page: Page,
     authData: IAuthData = this.authData
   ): Promise<void> {
-    if (!(await this.checkAuth(page))) {
+    if (!(await checkAuth(page))) {
       if (!this.cookiesProvider) {
         await this.signIn(page, authData);
         return;
@@ -110,7 +100,7 @@ export class FigmaBot {
       try {
         const cookies = await this.cookiesProvider.getCookies();
         await page.setCookie(...cookies);
-        if (!(await this.checkAuth(page))) {
+        if (!(await checkAuth(page))) {
           await this.signIn(page, authData);
         }
       } catch {
