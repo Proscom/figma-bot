@@ -13,7 +13,7 @@ export const waitAndNavigate = async (page: Page, promise: Promise<any>) =>
 export const waitForRedirects = async (
   page: Page,
   redirectsLimit: number = 10,
-  timeout = 5000
+  timeout: number = 5000
 ) => {
   try {
     for (let i = 0; i < redirectsLimit; i++) {
@@ -137,7 +137,7 @@ export const goToFilePage = async (page: Page, fileId: string) => {
 export const submitSingInForm = async (
   page: Page,
   authData,
-  delayDuration = 2000
+  delayDuration: number = 2000
 ) => {
   await wait(delayDuration);
   await page.click('form#auth-view-page > input[name="email"]');
