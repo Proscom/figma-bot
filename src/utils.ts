@@ -90,16 +90,16 @@ export const getNextSiblingHandle = async (
   page: Page,
   elementHandle: ElementHandle
 ): Promise<ElementHandle> => {
-  const nextSiblingHandleHandle = (
+  const nextSiblingHandle = (
     await page.evaluateHandle(
       (projectName: HTMLElement) => projectName.nextElementSibling,
       elementHandle
     )
   ).asElement();
-  if (!nextSiblingHandleHandle) {
+  if (!nextSiblingHandle) {
     throw new Error('Next sibling not found');
   }
-  return nextSiblingHandleHandle;
+  return nextSiblingHandle;
 };
 
 export const goTo = async (page: Page, targetURL: string) => {
