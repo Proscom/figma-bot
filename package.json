@@ -1,12 +1,17 @@
 {
-  "name": "figma-bot",
-  "version": "0.0.1",
+  "name": "@proscom/figma-bot",
+  "version": "0.0.2",
   "description": "Bot to work with projects and files in Figma",
   "license": "MIT",
-  "repository": "Proscom/figma-bot",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Proscom/figma-bot.git"
+  },
   "author": "Kirill Sviryukov @sviryukov",
   "homepage": "https://github.com/Proscom/figma-bot",
-  "bugs": "https://github.com/Proscom/figma-bot/issues",
+  "bugs": {
+    "url": "https://github.com/Proscom/figma-bot/issues"
+  },
   "main": "lib/index.js",
   "module": "lib/es/index.js",
   "typings": "lib/index.d.ts",
@@ -43,5 +48,8 @@
     "pino": "^6.11.0",
     "pino-pretty": "^4.5.0",
     "puppeteer": "^5.5.0"
+  },
+  "directories": {
+    "lib": "lib"
   }
 }
