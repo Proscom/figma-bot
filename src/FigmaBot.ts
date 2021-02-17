@@ -174,6 +174,8 @@ export class FigmaBot {
       );
     }
 
+    const newFilePageURLRegExp = /^https:\/\/www.figma.com\/file\/[\d\w]{22}[\/$].*/;
+
     const page: Page = await this.browser.newPage();
     try {
       await this._confirmAuth(page);
@@ -181,28 +183,39 @@ export class FigmaBot {
 
       await wait(this.delayDuration);
       await page.click('[class*="new_file_dropdown"]');
-
-      await page.waitForSelector('[class*="file_template_modal"]');
-
-      const blankTemplateDivHandle = await findElement(page, {
-        selector: '[class*="template_tiles"]',
-        innerHTML: 'Blank canvas'
-      });
-      await wait(this.delayDuration);
-      await click(page, blankTemplateDivHandle);
-
-      const createFileButtonHandle = await findElement(page, {
-        selector: '[class*="basic_form--btn"]',
-        innerHTML: 'Create file'
-      });
-      await wait(this.delayDuration);
-      await click(page, createFileButtonHandle);
     } catch (e) {
       await page.close();
       throw new FileCreationError(e, projectId, fileName);
     }
 
-    const newFilePageURLRegExp = /^https:\/\/www.figma.com\/file\/[\d\w]{22}[\/$].*/;
+    /**
+     * After click on [class*="new_file_dropdown"] could be straight redirected
+     * to file page or open [class*="file_template_modal"]
+     */
+
+    await waitForRedirects(page);
+    if (!newFilePageURLRegExp.test(page.url())) {
+      try {
+        await page.waitForSelector('[class*="file_template_modal"]');
+
+        const blankTemplateDivHandle = await findElement(page, {
+          selector: '[class*="template_tiles"]',
+          innerHTML: 'Blank canvas'
+        });
+        await wait(this.delayDuration);
+        await click(page, blankTemplateDivHandle);
+
+        const createFileButtonHandle = await findElement(page, {
+          selector: '[class*="basic_form--btn"]',
+          innerHTML: 'Create file'
+        });
+        await wait(this.delayDuration);
+        await click(page, createFileButtonHandle);
+      } catch (e) {
+        await page.close();
+        throw new FileCreationError(e, projectId, fileName);
+      }
+    }
 
     await waitForRedirects(page);
     const url = page.url();
