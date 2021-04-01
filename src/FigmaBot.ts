@@ -58,7 +58,7 @@ export class FigmaBot {
   async _signIn(page: Page, authData = this.authData): Promise<void> {
     await waitAndNavigate(page, page.goto('https://www.figma.com/login'));
 
-    if (page.url() === 'https://www.figma.com/files/recent') {
+    if (page.url().includes('https://www.figma.com/files/recent')) {
       return;
     }
 
@@ -69,7 +69,7 @@ export class FigmaBot {
     }
 
     const url = page.url();
-    if (url === 'https://www.figma.com/files/recent') {
+    if (url.includes('https://www.figma.com/files/recent')) {
       if (this.cookiesProvider) {
         const cookies = await page.cookies();
         await this.cookiesProvider.setCookies(cookies);

@@ -175,9 +175,9 @@ export const parseLoginPageError = async (
   );
 };
 export const checkAuth = async (page: Page): Promise<boolean> => {
-  if (page.url() === 'https://www.figma.com/files/recent') {
+  if (page.url().includes('https://www.figma.com/files/recent')) {
     return true;
   }
   await waitAndNavigate(page, page.goto('https://www.figma.com/files/recent'));
-  return page.url() === 'https://www.figma.com/files/recent';
+  return page.url().includes('https://www.figma.com/files/recent');
 };
