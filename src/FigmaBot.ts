@@ -94,11 +94,12 @@ export class FigmaBot {
       try {
         const cookies = await this.cookiesProvider.getCookies();
         await page.setCookie(...cookies);
+      } catch (e) {
+        throw new AuthorizationError(e);
+      } finally {
         if (!(await checkAuth(page))) {
           await this._signIn(page, authData);
         }
-      } catch {
-        await this._signIn(page, authData);
       }
     }
   }
