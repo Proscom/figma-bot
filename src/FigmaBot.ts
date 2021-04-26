@@ -183,14 +183,24 @@ export class FigmaBot {
       await goToProjectPage(page, projectId);
 
       await wait(this.delayDuration);
-      await page.click('[class*="new_file_dropdown"]');
+      await page.click('[class*="new_file_dropdown--toolBarButton"]');
+      await page.waitForSelector(
+        '[class*="new_file_dropdown--newFileDropdown"]'
+      );
+      await wait(this.delayDuration);
+      const newDesignFileOptionHandle = await findElement(page, {
+        selector:
+          '[class*="new_file_dropdown--newFileDropdown"] [class*="dropdown--option"]',
+        innerHTML: new RegExp('Design file')
+      });
+      await click(page, newDesignFileOptionHandle);
     } catch (e) {
       await page.close();
       throw new FileCreationError(e, projectId, fileName);
     }
 
     /**
-     * After click on [class*="new_file_dropdown"] could be straight redirected
+     * After click on 'Design file' dropdown option could be straight redirected
      * to file page or open [class*="file_template_modal"]
      */
 
