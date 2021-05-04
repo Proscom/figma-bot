@@ -255,7 +255,6 @@ export class FigmaBot {
       await this._confirmAuth(page);
       await goToFilePage(page, fileId);
       await waitForRedirects(page);
-      await page.waitForSelector('[class*="filename_view--title"]');
       await wait(this.delayDuration);
       await page.click('[class*="filename_view--title"]');
       await wait(this.delayDuration);
