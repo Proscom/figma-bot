@@ -182,6 +182,7 @@ export class FigmaBot {
       await this._confirmAuth(page);
       await goToProjectPage(page, projectId);
 
+      await page.waitForSelector('[class*="new_file_dropdown--toolBarButton"]');
       await wait(this.delayDuration);
       await page.click('[class*="new_file_dropdown--toolBarButton"]');
       await page.waitForSelector(
@@ -255,6 +256,7 @@ export class FigmaBot {
       await this._confirmAuth(page);
       await goToFilePage(page, fileId);
       await waitForRedirects(page);
+      await page.waitForSelector('[class*="filename_view--title"]');
       await wait(this.delayDuration);
       await page.click('[class*="filename_view--title"]');
       await wait(this.delayDuration);
