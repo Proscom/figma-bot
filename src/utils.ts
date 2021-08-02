@@ -1,6 +1,12 @@
 import { Page } from 'puppeteer/lib/esm/puppeteer/common/Page';
 import { ElementHandle } from 'puppeteer/lib/esm/puppeteer/common/JSHandle';
 
+interface IWaitForRedirectsParams {
+  page: Page;
+  timeout?: number;
+  redirectsLimit?: number;
+}
+
 export const random = (min: number, max: number) =>
   min + Math.round(Math.random() * (max - min));
 
@@ -10,11 +16,11 @@ export const wait = (timeout: number) =>
 export const waitAndNavigate = async (page: Page, promise: Promise<any>) =>
   await Promise.all([page.waitForNavigation(), promise]);
 
-export const waitForRedirects = async (
-  page: Page,
-  redirectsLimit: number = 10,
-  timeout: number = 5000
-) => {
+export const waitForRedirects = async ({
+  page,
+  redirectsLimit = 10,
+  timeout = 7000
+}: IWaitForRedirectsParams) => {
   try {
     for (let i = 0; i < redirectsLimit; i++) {
       await page.waitForNavigation({ timeout });
@@ -107,7 +113,10 @@ export const goTo = async (page: Page, targetURL: string) => {
     return;
   }
   await page.goto(targetURL);
-  await waitForRedirects(page);
+  await waitForRedirects({
+    page,
+    timeout: 5000
+  });
   if (!page.url().includes(targetURL)) {
     throw new Error(`Page loading failed.`);
   }
