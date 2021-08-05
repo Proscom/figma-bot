@@ -205,7 +205,7 @@ export class FigmaBot {
      * to file page or open [class*="file_template_modal"]
      */
 
-    await waitForRedirects(page);
+    await waitForRedirects({ page });
     if (!newFilePageURLRegExp.test(page.url())) {
       try {
         await page.waitForSelector('[class*="file_template_modal"]');
@@ -229,7 +229,7 @@ export class FigmaBot {
       }
     }
 
-    await waitForRedirects(page);
+    await waitForRedirects({ page });
     const url = page.url();
     if (!newFilePageURLRegExp.test(url)) {
       await page.close();
@@ -255,7 +255,7 @@ export class FigmaBot {
     try {
       await this._confirmAuth(page);
       await goToFilePage(page, fileId);
-      await waitForRedirects(page);
+      await waitForRedirects({ page });
       await page.waitForSelector('[class*="filename_view--title"]');
       await wait(this.delayDuration);
       await page.click('[class*="filename_view--title"]');
