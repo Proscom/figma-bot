@@ -182,51 +182,14 @@ export class FigmaBot {
       await this._confirmAuth(page);
       await goToProjectPage(page, projectId);
 
-      await page.waitForSelector('[class*="new_file_dropdown--toolBarButton"]');
-      await wait(this.delayDuration);
-      await page.click('[class*="new_file_dropdown--toolBarButton"]');
       await page.waitForSelector(
-        '[class*="new_file_dropdown--newFileDropdown"]'
+        '[class*="new_file_creation_topbar--designTile"]'
       );
       await wait(this.delayDuration);
-      const newDesignFileOptionHandle = await findElement(page, {
-        selector:
-          '[class*="new_file_dropdown--newFileDropdown"] [class*="dropdown--option"]',
-        innerHTML: new RegExp('Design file')
-      });
-      await click(page, newDesignFileOptionHandle);
+      await page.click('[class*="new_file_creation_topbar--designTile"]');
     } catch (e) {
       await page.close();
       throw new FileCreationError(e, projectId, fileName);
-    }
-
-    /**
-     * After click on 'Design file' dropdown option could be straight redirected
-     * to file page or open [class*="file_template_modal"]
-     */
-
-    await waitForRedirects({ page });
-    if (!newFilePageURLRegExp.test(page.url())) {
-      try {
-        await page.waitForSelector('[class*="file_template_modal"]');
-
-        const blankTemplateDivHandle = await findElement(page, {
-          selector: '[class*="template_tiles"]',
-          innerHTML: 'Blank canvas'
-        });
-        await wait(this.delayDuration);
-        await click(page, blankTemplateDivHandle);
-
-        const createFileButtonHandle = await findElement(page, {
-          selector: '[class*="basic_form--btn"]',
-          innerHTML: 'Create file'
-        });
-        await wait(this.delayDuration);
-        await click(page, createFileButtonHandle);
-      } catch (e) {
-        await page.close();
-        throw new FileCreationError(e, projectId, fileName);
-      }
     }
 
     await waitForRedirects({ page });
