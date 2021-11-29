@@ -1,6 +1,6 @@
 {
   "name": "@proscom/figma-bot",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Bot to work with projects and files in Figma",
   "license": "MIT",
   "repository": {
