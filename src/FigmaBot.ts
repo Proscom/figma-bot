@@ -182,11 +182,12 @@ export class FigmaBot {
       await this._confirmAuth(page);
       await goToProjectPage(page, projectId);
 
-      await page.waitForSelector(
-        '[class*="new_file_creation_topbar--designTile"]'
-      );
+      const newFileButtonHandle = await findElement(page, {
+        selector: '[class*="new_file_creation_topbar--tile"]',
+        innerHTML: /New design file/
+      });
       await wait(this.delayDuration);
-      await page.click('[class*="new_file_creation_topbar--designTile"]');
+      await click(page, newFileButtonHandle);
     } catch (e) {
       await page.close();
       throw new FileCreationError(e, projectId, fileName);
