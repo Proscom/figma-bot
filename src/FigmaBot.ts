@@ -20,7 +20,7 @@ import {
   submitSingInForm,
   parseLoginPageError,
   checkAuth,
-  getNextSiblingHandle
+  clearInput
 } from './utils';
 
 export interface IAuthData {
@@ -105,7 +105,12 @@ export class FigmaBot {
   }
 
   async start(): Promise<void> {
-    this.browser = await puppeteer.launch();
+    this.browser = await puppeteer.launch({
+      defaultViewport: {
+        width: 1920,
+        height: 1080
+      }
+    });
   }
 
   async stop(): Promise<void> {
@@ -126,7 +131,7 @@ export class FigmaBot {
       await goToTeamPage(page, teamId);
 
       const newProjectButtonHandle = await findElement(page, {
-        selector: '[class*="tool_bar--toolBarButton"]',
+        selector: '[class*="basic_form--btn"]',
         innerHTML: 'New project'
       });
       await wait(this.delayDuration);
@@ -241,26 +246,24 @@ export class FigmaBot {
       await this._confirmAuth(page);
       await goToProjectPage(page, projectId);
       await wait(this.delayDuration);
-      const pageTitle = await page.title();
-      const projectName = pageTitle.split(' – Figma')[0];
-      const projectNameHandle = await findElement(page, {
-        selector: '[class*="tool_bar--toolBarTabContent"]',
-        innerHTML: projectName
+      const projectOptionsHandle = await findElement(page, {
+        selector: '[class*="page_header"] [class*="basic_form--btn"]:last-child'
       });
-      const projectEditMenuOpenButtonHandle = await getNextSiblingHandle(
-        page,
-        projectNameHandle
-      );
       await wait(this.delayDuration);
-      await click(page, projectEditMenuOpenButtonHandle);
+      await click(page, projectOptionsHandle);
       const renameButtonHandle = await findElement(page, {
         selector: '[class*="dropdown--_optionBase"]',
         innerHTML: 'Rename'
       });
       await wait(this.delayDuration);
       await click(page, renameButtonHandle);
+      const input = await findElement(page, {
+        selector: 'input[class*="resource_rename_modal"]'
+      });
       await wait(this.delayDuration);
-      await page.keyboard.type(newName, { delay: 200 });
+      await clearInput(page, input);
+      await wait(this.delayDuration);
+      await input.type(newName, { delay: 200 });
       await wait(this.delayDuration);
       await page.keyboard.press('Enter', { delay: 70 });
       await wait(this.delayDuration);

@@ -78,6 +78,11 @@ export const findElement = async (
   );
 };
 
+export const clearInput = async (page, input: ElementHandle) => {
+  await input.click({ clickCount: 3 });
+  await page.keyboard.press('Backspace');
+};
+
 export const click = async (
   page: Page,
   elementHandle: ElementHandle
