@@ -1,49 +1,26 @@
 import puppeteer from 'puppeteer';
 import { Browser } from 'puppeteer/lib/esm/puppeteer/common/Browser';
 import { Page } from 'puppeteer/lib/esm/puppeteer/common/Page';
+
+import { ICookiesProvider } from './common/cookiesProvider';
 import {
   ProjectCreationError,
   FileCreationError,
   AuthorizationError,
   FileRenameError,
-  ProjectRenameError
-} from './errors';
-import {
-  wait,
-  findElement,
-  click,
-  waitAndNavigate,
-  waitForRedirects,
-  goToTeamPage,
-  goToProjectPage,
-  goToFilePage,
-  submitSingInForm,
-  parseLoginPageError,
-  checkAuth,
-  clearInput
-} from './utils';
-
-export interface IAuthData {
-  email: string;
-  password: string;
-}
-
-export interface CookiesProvider {
-  getCookies: () => Promise<any>;
-  setCookies: (cookies: any) => Promise<void>;
-}
-
-export interface IFigmaBotOptions {
-  authData: IAuthData;
-  delayDuration?: number;
-  cookiesProvider?: CookiesProvider;
-}
+  ProjectRenameError,
+  DuplicateExternalFileError,
+  RenameFileInProjectError
+} from './common/errors';
+import { wait } from './common/functions';
+import { IAuthData, IFigmaBotOptions } from './figmaBot.interfaces';
+import { FigmaBotCommonActions } from './figmaBot.common.actions';
 
 export class FigmaBot {
   browser: Browser;
   authData: IAuthData;
   delayDuration: number;
-  cookiesProvider: CookiesProvider | undefined;
+  cookiesProvider: ICookiesProvider | undefined;
 
   constructor({
     authData,
@@ -56,14 +33,20 @@ export class FigmaBot {
   }
 
   async _signIn(page: Page, authData = this.authData): Promise<void> {
-    await waitAndNavigate(page, page.goto('https://www.figma.com/login'));
+    await FigmaBotCommonActions.waitAndNavigate(
+      page,
+      page.goto('https://www.figma.com/login')
+    );
 
     if (page.url().includes('https://www.figma.com/files/recent')) {
       return;
     }
 
     try {
-      await waitAndNavigate(page, submitSingInForm(page, authData));
+      await FigmaBotCommonActions.waitAndNavigate(
+        page,
+        FigmaBotCommonActions.submitSingInForm(page, authData)
+      );
     } catch (e) {
       throw new AuthorizationError(e);
     }
@@ -75,7 +58,7 @@ export class FigmaBot {
         await this.cookiesProvider.setCookies(cookies);
       }
     } else if (url === 'https://www.figma.com/login') {
-      const error = await parseLoginPageError(page);
+      const error = await FigmaBotCommonActions.parseLoginPageError(page);
       throw new AuthorizationError(error || 'unknown error');
     } else {
       throw new AuthorizationError(`Unexpectedly redirected to "${url}"`);
@@ -86,7 +69,7 @@ export class FigmaBot {
     page: Page,
     authData: IAuthData = this.authData
   ): Promise<void> {
-    if (!(await checkAuth(page))) {
+    if (!(await FigmaBotCommonActions.checkAuth(page))) {
       if (!this.cookiesProvider) {
         await this._signIn(page, authData);
         return;
@@ -97,7 +80,7 @@ export class FigmaBot {
       } catch (e) {
         throw new AuthorizationError(e);
       } finally {
-        if (!(await checkAuth(page))) {
+        if (!(await FigmaBotCommonActions.checkAuth(page))) {
           await this._signIn(page, authData);
         }
       }
@@ -128,14 +111,17 @@ export class FigmaBot {
     const page: Page = await this.browser.newPage();
     try {
       await this._confirmAuth(page);
-      await goToTeamPage(page, teamId);
+      await FigmaBotCommonActions.goToTeamPage(page, teamId);
 
-      const newProjectButtonHandle = await findElement(page, {
-        selector: '[class*="basic_form--btn"]',
-        innerHTML: 'New project'
-      });
+      const newProjectButtonHandle = await FigmaBotCommonActions.findElement(
+        page,
+        {
+          selector: '[class*="basic_form--btn"]',
+          innerHTML: 'New project'
+        }
+      );
       await wait(this.delayDuration);
-      await click(page, newProjectButtonHandle);
+      await FigmaBotCommonActions.click(page, newProjectButtonHandle);
 
       await page.waitForSelector('[class*="new_folder_modal"]');
 
@@ -145,12 +131,18 @@ export class FigmaBot {
       await wait(this.delayDuration);
       await page.keyboard.type(projectName, { delay: 200 });
 
-      const createProjectButtonHandle = await findElement(page, {
-        selector: '[class*="basic_form--btn"]',
-        innerHTML: 'Create project'
-      });
+      const createProjectButtonHandle = await FigmaBotCommonActions.findElement(
+        page,
+        {
+          selector: '[class*="basic_form--btn"]',
+          innerHTML: 'Create project'
+        }
+      );
       await wait(this.delayDuration);
-      await waitAndNavigate(page, click(page, createProjectButtonHandle));
+      await FigmaBotCommonActions.waitAndNavigate(
+        page,
+        FigmaBotCommonActions.click(page, createProjectButtonHandle)
+      );
     } catch (e) {
       await page.close();
       throw new ProjectCreationError(e, teamId, projectName);
@@ -185,20 +177,23 @@ export class FigmaBot {
     const page: Page = await this.browser.newPage();
     try {
       await this._confirmAuth(page);
-      await goToProjectPage(page, projectId);
+      await FigmaBotCommonActions.goToProjectPage(page, projectId);
 
-      const newFileButtonHandle = await findElement(page, {
-        selector: '[class*="new_file_creation_topbar--tile"]',
-        innerHTML: /New design file/
-      });
+      const newFileButtonHandle = await FigmaBotCommonActions.findElement(
+        page,
+        {
+          selector: '[class*="new_file_creation_topbar--tile"]',
+          innerHTML: /New design file/
+        }
+      );
       await wait(this.delayDuration);
-      await click(page, newFileButtonHandle);
+      await FigmaBotCommonActions.click(page, newFileButtonHandle);
     } catch (e) {
       await page.close();
       throw new FileCreationError(e, projectId, fileName);
     }
 
-    await waitForRedirects({ page });
+    await FigmaBotCommonActions.waitForRedirects({ page });
     const url = page.url();
     if (!newFilePageURLRegExp.test(url)) {
       await page.close();
@@ -223,8 +218,8 @@ export class FigmaBot {
     const page: Page = await this.browser.newPage();
     try {
       await this._confirmAuth(page);
-      await goToFilePage(page, fileId);
-      await waitForRedirects({ page });
+      await FigmaBotCommonActions.goToFilePage(page, fileId);
+      await FigmaBotCommonActions.waitForRedirects({ page });
       await page.waitForSelector('[class*="filename_view--title"]');
       await wait(this.delayDuration);
       await page.click('[class*="filename_view--title"]');
@@ -244,24 +239,28 @@ export class FigmaBot {
     const page: Page = await this.browser.newPage();
     try {
       await this._confirmAuth(page);
-      await goToProjectPage(page, projectId);
+      await FigmaBotCommonActions.goToProjectPage(page, projectId);
       await wait(this.delayDuration);
-      const projectOptionsHandle = await findElement(page, {
-        selector: '[class*="page_header"] [class*="basic_form--btn"]:last-child'
-      });
+      const projectOptionsHandle = await FigmaBotCommonActions.findElement(
+        page,
+        {
+          selector:
+            '[class*="page_header"] [class*="basic_form--btn"]:last-child'
+        }
+      );
       await wait(this.delayDuration);
-      await click(page, projectOptionsHandle);
-      const renameButtonHandle = await findElement(page, {
+      await FigmaBotCommonActions.click(page, projectOptionsHandle);
+      const renameButtonHandle = await FigmaBotCommonActions.findElement(page, {
         selector: '[class*="dropdown--_optionBase"]',
         innerHTML: 'Rename'
       });
       await wait(this.delayDuration);
-      await click(page, renameButtonHandle);
-      const input = await findElement(page, {
+      await FigmaBotCommonActions.click(page, renameButtonHandle);
+      const input = await FigmaBotCommonActions.findElement(page, {
         selector: 'input[class*="resource_rename_modal"]'
       });
       await wait(this.delayDuration);
-      await clearInput(page, input);
+      await FigmaBotCommonActions.clearInput(page, input);
       await wait(this.delayDuration);
       await input.type(newName, { delay: 200 });
       await wait(this.delayDuration);
@@ -272,5 +271,165 @@ export class FigmaBot {
     } finally {
       await page.close();
     }
+  }
+
+  /**
+   * Copying [sourceFileName] from project [sourceProjectId] to [destinationProjectName]
+   */
+  async duplicateFileFromExternalProject(
+    sourceProjectId: string,
+    sourceFileName: string,
+    destinationProjectName: string
+  ): Promise<void> {
+    const page: Page = await this.browser.newPage();
+    try {
+      await this._confirmAuth(page);
+      // open project page [sourceProjectId]
+      await FigmaBotCommonActions.goToProjectPage(page, sourceProjectId);
+      await wait(this.delayDuration);
+
+      // find figma-file [sourceFileName] and press mouse right-button
+      const sourceFileButtonHandle = await FigmaBotCommonActions.findElement(
+        page,
+        {
+          selector: '[class*="generic_tile--title"]',
+          innerHTML: sourceFileName
+        }
+      );
+      await wait(this.delayDuration);
+      await FigmaBotCommonActions.click(page, sourceFileButtonHandle, 'right');
+      await wait(this.delayDuration);
+
+      // in dropdown-list find "Duplicate" and press mouse right-button
+      const duplicateFileButtonHandle = await FigmaBotCommonActions.findElement(
+        page,
+        {
+          selector: '*',
+          innerHTML: 'Duplicate'
+        }
+      );
+      await wait(this.delayDuration);
+      await wait(this.delayDuration);
+      await FigmaBotCommonActions.click(page, duplicateFileButtonHandle);
+      await wait(this.delayDuration);
+
+      // find created copy of [sourceFileName] and press mouse right-button
+      const copyFileButtonHandle = await FigmaBotCommonActions.findElement(
+        page,
+        {
+          selector: '[class*="generic_tile--title"]',
+          innerHTML: sourceFileName + ' (Copy)'
+        }
+      );
+      await wait(this.delayDuration);
+      await FigmaBotCommonActions.click(page, copyFileButtonHandle, 'right');
+      await wait(this.delayDuration);
+
+      // in dropdown-list find "Move" and press mouse left-button
+      const moveCopyFileButtonHandle = await FigmaBotCommonActions.findElement(
+        page,
+        {
+          selector: '*',
+          innerHTML: 'Move file...'
+        }
+      );
+      await wait(this.delayDuration);
+      await wait(this.delayDuration);
+      await FigmaBotCommonActions.click(page, moveCopyFileButtonHandle);
+      await wait(this.delayDuration);
+
+      // in modal - input [destinationProjectName]
+      await wait(this.delayDuration);
+      const input = await FigmaBotCommonActions.findElement(page, {
+        selector: 'input[class*="file_move"]'
+      });
+      await input.type(destinationProjectName, { delay: 200 });
+      await wait(this.delayDuration);
+
+      // navigate to [destinationProjectName] in projects list and press mouse left-button - confirm destination project
+      await wait(this.delayDuration);
+      const destinationProjectInModal = await FigmaBotCommonActions.findElement(
+        page,
+        {
+          selector: '[class*="file_move--folderName"]',
+          innerHTML: destinationProjectName
+        }
+      );
+      await wait(this.delayDuration);
+      await FigmaBotCommonActions.click(page, destinationProjectInModal);
+      await wait(this.delayDuration);
+
+      // find "Move" button in modal and press mouse left-button
+      const moveCopyFileInModalButtonHandle = await FigmaBotCommonActions.findElement(
+        page,
+        {
+          selector: '[class*="basic_form--primaryBtn"]',
+          innerHTML: 'Move'
+        }
+      );
+      await wait(this.delayDuration);
+      await wait(this.delayDuration);
+      await FigmaBotCommonActions.click(page, moveCopyFileInModalButtonHandle);
+      await wait(this.delayDuration);
+    } catch (e) {
+      throw new DuplicateExternalFileError(e, sourceProjectId, sourceFileName);
+    } finally {
+      await page.close();
+    }
+    return;
+  }
+
+  /**
+   * Rename file [sourceFileName] to [newFileName] in project [sourceProjectId]
+   */
+  async renameFileInProject(
+    sourceProjectId: string,
+    sourceFileName: string,
+    newFileName: string
+  ): Promise<void> {
+    const page: Page = await this.browser.newPage();
+    try {
+      await this._confirmAuth(page);
+      // open project page [sourceProjectId]
+      await FigmaBotCommonActions.goToProjectPage(page, sourceProjectId);
+      await wait(this.delayDuration);
+
+      // find figma-file [sourceFileName] and press mouse right-button
+      const sourceFileButtonHandle = await FigmaBotCommonActions.findElement(
+        page,
+        {
+          selector: '[class*="generic_tile--title"]',
+          innerHTML: sourceFileName
+        }
+      );
+      await wait(this.delayDuration);
+      await FigmaBotCommonActions.click(page, sourceFileButtonHandle, 'right');
+      await wait(this.delayDuration);
+
+      // in dropdown-list find "Rename" and press mouse left-button
+      const renameFileButtonHandle = await FigmaBotCommonActions.findElement(
+        page,
+        {
+          selector: '*',
+          innerHTML: 'Rename'
+        }
+      );
+      await wait(this.delayDuration);
+      await wait(this.delayDuration);
+      await FigmaBotCommonActions.click(page, renameFileButtonHandle);
+      await wait(this.delayDuration);
+
+      // from keyboard - type [newFileName] and press "Enter"
+      await wait(this.delayDuration);
+      await page.keyboard.type(newFileName, { delay: 200 });
+      await wait(this.delayDuration);
+      await page.keyboard.press('Enter', { delay: 70 });
+      await wait(this.delayDuration);
+    } catch (e) {
+      throw new RenameFileInProjectError(e, sourceProjectId, sourceFileName);
+    } finally {
+      await page.close();
+    }
+    return;
   }
 }
