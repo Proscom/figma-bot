@@ -312,6 +312,8 @@ export class FigmaBot {
       await wait(this.delayDuration);
       await FigmaBotCommonActions.click(page, duplicateFileButtonHandle);
       await wait(this.delayDuration);
+      await wait(this.delayDuration);
+      await wait(this.delayDuration);
 
       // find created copy of [sourceFileName] and press mouse right-button
       const copyFileButtonHandle = await FigmaBotCommonActions.findElement(
@@ -370,6 +372,7 @@ export class FigmaBot {
       await wait(this.delayDuration);
       await wait(this.delayDuration);
       await FigmaBotCommonActions.click(page, moveCopyFileInModalButtonHandle);
+      await wait(this.delayDuration);
       await wait(this.delayDuration);
     } catch (e) {
       throw new DuplicateExternalFileError(e, sourceProjectId, sourceFileName);
