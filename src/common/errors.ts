@@ -10,24 +10,7 @@ export class AuthorizationError extends Error {
     this.error = typeof error === 'string' ? new Error(error) : error;
   }
 }
-export class ProjectCreationError extends Error {
-  error: Error;
-  name = 'ProjectCreationError';
-  constructor(
-    error: Error | string,
-    public teamId: string,
-    public projectName?: string
-  ) {
-    super(
-      `Project ${
-        projectName && `"${projectName}"`
-      } creation in team with id "${teamId}" failed | ${
-        typeof error === 'string' ? error : error.message
-      }`
-    );
-    this.error = typeof error === 'string' ? new Error(error) : error;
-  }
-}
+
 export class FileCreationError extends Error {
   error: Error;
   name = 'FileCreationError';
@@ -46,6 +29,7 @@ export class FileCreationError extends Error {
     this.error = typeof error === 'string' ? new Error(error) : error;
   }
 }
+
 export class FileRenameError extends Error {
   error: Error;
   name = 'FileRenameError';
@@ -62,6 +46,26 @@ export class FileRenameError extends Error {
     this.error = typeof error === 'string' ? new Error(error) : error;
   }
 }
+
+export class ProjectCreationError extends Error {
+  error: Error;
+  name = 'ProjectCreationError';
+  constructor(
+    error: Error | string,
+    public teamId: string,
+    public projectName?: string
+  ) {
+    super(
+      `Project ${
+        projectName && `"${projectName}"`
+      } creation in team with id "${teamId}" failed | ${
+        typeof error === 'string' ? error : error.message
+      }`
+    );
+    this.error = typeof error === 'string' ? new Error(error) : error;
+  }
+}
+
 export class ProjectRenameError extends Error {
   error: Error;
   name = 'ProjectRenameError';
@@ -72,6 +76,40 @@ export class ProjectRenameError extends Error {
   ) {
     super(
       `Project with id "${projectId}" rename to "${newName}" failed | ${
+        typeof error === 'string' ? error : error.message
+      }`
+    );
+    this.error = typeof error === 'string' ? new Error(error) : error;
+  }
+}
+
+export class DuplicateExternalFileError extends Error {
+  error: Error;
+  name = 'ProjectRenameError';
+  constructor(
+    error: Error | string,
+    public projectId: string,
+    public fileName?: string
+  ) {
+    super(
+      `Duplicating ${fileName} from project ${projectId} failed | ${
+        typeof error === 'string' ? error : error.message
+      }`
+    );
+    this.error = typeof error === 'string' ? new Error(error) : error;
+  }
+}
+
+export class RenameFileInProjectError extends Error {
+  error: Error;
+  name = 'ProjectRenameError';
+  constructor(
+    error: Error | string,
+    public projectId: string,
+    public fileName?: string
+  ) {
+    super(
+      `Renaming ${fileName} in project ${projectId} failed | ${
         typeof error === 'string' ? error : error.message
       }`
     );

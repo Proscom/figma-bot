@@ -1,7 +1,11 @@
 import { promises as fs } from 'fs';
-import { CookiesProvider } from './FigmaBot';
 
-export class FSCookiesProvider implements CookiesProvider {
+export interface ICookiesProvider {
+  getCookies: () => Promise<any>;
+  setCookies: (cookies: any) => Promise<void>;
+}
+
+export class FSCookiesProvider implements ICookiesProvider {
   constructor(public path: string = './cookies.json') {}
   async getCookies() {
     try {
