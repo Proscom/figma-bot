@@ -116,8 +116,7 @@ export class FigmaBot {
       const newProjectButtonHandle = await FigmaBotCommonActions.findElement(
         page,
         {
-          selector: '[class*="basic_form--btn"]',
-          innerHTML: 'New project'
+          selector: '[data-onboarding-key*="new-project"]'
         }
       );
       await wait(this.delayDuration);
@@ -134,7 +133,7 @@ export class FigmaBot {
       const createProjectButtonHandle = await FigmaBotCommonActions.findElement(
         page,
         {
-          selector: '[class*="basic_form--btn"]',
+          selector: '[class*="basic_form--primaryBtn"]',
           innerHTML: 'Create project'
         }
       );
@@ -182,8 +181,7 @@ export class FigmaBot {
       const newFileButtonHandle = await FigmaBotCommonActions.findElement(
         page,
         {
-          selector: '[class*="new_file_creation_topbar--tile"]',
-          innerHTML: /New design file/
+          selector: '[class*="newDesignFileButton"]'
         }
       );
       await wait(this.delayDuration);
@@ -235,6 +233,7 @@ export class FigmaBot {
     }
   }
 
+  // TO-DO - check capability
   async renameProject(projectId: string, newName: string) {
     const page: Page = await this.browser.newPage();
     try {
@@ -273,6 +272,7 @@ export class FigmaBot {
     }
   }
 
+  // TO-DO - check capability
   /**
    * Copying [sourceFileName] from project [sourceProjectId] to [destinationProjectName]
    */
@@ -382,6 +382,7 @@ export class FigmaBot {
     return;
   }
 
+  // TO-DO - check capability
   /**
    * Rename file [sourceFileName] to [newFileName] in project [sourceProjectId]
    */
