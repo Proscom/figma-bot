@@ -147,7 +147,7 @@ export class FigmaBot {
       throw new ProjectCreationError(e, teamId, projectName);
     }
 
-    const newProjectPageURLRegExp = /^https:\/\/www.figma.com\/files\/project\/[\d]{8,9}[\/$].*/;
+    const newProjectPageURLRegExp = /^https:\/\/www.figma.com\/files\/project\/[\d]{8,9}.*/;
     const url = page.url();
     if (!newProjectPageURLRegExp.test(url)) {
       await page.close();
