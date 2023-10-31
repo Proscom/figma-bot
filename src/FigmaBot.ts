@@ -122,10 +122,10 @@ export class FigmaBot {
       await wait(this.delayDuration);
       await FigmaBotCommonActions.click(page, newProjectButtonHandle);
 
-      await page.waitForSelector('[class*="new_folder_modal"]');
+      await page.waitForSelector('[class*="new_folder_modal--projectName"]');
 
       await wait(this.delayDuration);
-      await page.click('[class*="new_folder_modal"] > input');
+      await page.click('input[class*="new_folder_modal--projectName"]');
 
       await wait(this.delayDuration);
       await page.keyboard.type(projectName, { delay: 200 });
@@ -147,7 +147,7 @@ export class FigmaBot {
       throw new ProjectCreationError(e, teamId, projectName);
     }
 
-    const newProjectPageURLRegExp = /^https:\/\/www.figma.com\/files\/project\/[\d]{8}[\/$].*/;
+    const newProjectPageURLRegExp = /^https:\/\/www.figma.com\/files\/project\/[\d]{8,9}[\/$].*/;
     const url = page.url();
     if (!newProjectPageURLRegExp.test(url)) {
       await page.close();
